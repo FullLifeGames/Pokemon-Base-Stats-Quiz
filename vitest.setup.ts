@@ -17,6 +17,29 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+// Mock vue-router globals (for auto-imported composables)
+globalThis.useRouter = vi.fn(() => ({
+  push: vi.fn(),
+  replace: vi.fn(),
+  go: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  beforeEach: vi.fn(),
+  afterEach: vi.fn(),
+}))
+
+globalThis.useRoute = vi.fn(() => ({
+  params: {},
+  query: {},
+  path: '/',
+  name: undefined,
+  meta: {},
+}))
+
+// Mock watch and watchEffect (for auto-imported composables)
+globalThis.watch = vi.fn()
+globalThis.watchEffect = vi.fn()
+
 // Create i18n for tests
 const i18n = createI18n({
   legacy: false,

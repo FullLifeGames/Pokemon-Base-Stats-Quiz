@@ -7,11 +7,7 @@ describe('App.vue', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
-          SidebarProvider: true,
-          AppSidebar: true,
-          SidebarInset: true,
-          SidebarTrigger: true,
-          BaseStatQuiz: true,
+          RouterView: true,
         },
       },
     })
@@ -22,11 +18,7 @@ describe('App.vue', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
-          SidebarProvider: false,
-          AppSidebar: true,
-          SidebarInset: false,
-          SidebarTrigger: true,
-          BaseStatQuiz: true,
+          RouterView: true,
         },
       },
     })
@@ -37,29 +29,21 @@ describe('App.vue', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
-          SidebarProvider: true,
-          AppSidebar: true,
-          SidebarInset: true,
-          SidebarTrigger: true,
-          BaseStatQuiz: true,
+          RouterView: true,
         },
       },
     })
     expect(wrapper.vm).toBeDefined()
   })
 
-  it('mounts without errors', () => {
+  it('contains a RouterView', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
-          SidebarProvider: true,
-          AppSidebar: true,
-          SidebarInset: true,
-          SidebarTrigger: true,
-          BaseStatQuiz: true,
+          RouterView: true,
         },
       },
     })
-    expect(wrapper.vm).toBeDefined()
+    expect(wrapper.findComponent({ name: 'RouterView' }).exists()).toBe(true)
   })
 })
