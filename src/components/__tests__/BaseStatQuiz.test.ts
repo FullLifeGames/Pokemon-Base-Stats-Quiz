@@ -13,6 +13,8 @@ vi.mock('@pkmn/dex', () => {
         forme: undefined,
         gen: 1,
         evos: ['ivysaur'],
+        types: ['Grass', 'Poison'],
+        abilities: { '0': 'Overgrow', H: 'Chlorophyll' },
         baseStats: { hp: 45, atk: 49, def: 49, spa: 65, spd: 65, spe: 45 },
       },
       {
@@ -21,6 +23,8 @@ vi.mock('@pkmn/dex', () => {
         forme: undefined,
         gen: 1,
         evos: ['venusaur'],
+        types: ['Grass', 'Poison'],
+        abilities: { '0': 'Overgrow', H: 'Chlorophyll' },
         baseStats: { hp: 60, atk: 62, def: 63, spa: 80, spd: 80, spe: 60 },
       },
       {
@@ -29,6 +33,8 @@ vi.mock('@pkmn/dex', () => {
         forme: undefined,
         gen: 1,
         evos: [],
+        types: ['Grass', 'Poison'],
+        abilities: { '0': 'Overgrow', H: 'Chlorophyll' },
         baseStats: { hp: 80, atk: 82, def: 83, spa: 100, spd: 100, spe: 80 },
       },
     ],
@@ -57,130 +63,61 @@ vi.mock('@/lib/pokemonNameHelper', () => ({
 }))
 
 describe('BaseStatQuiz.vue', () => {
-  it('renders quiz component', () => {
-    const wrapper = mount(BaseStatQuiz, {
+  const mountComponent = (props = {}) => {
+    return mount(BaseStatQuiz, {
       props: {
         settings: defaultSettings,
+        ...props,
       },
       global: {
         stubs: {
           Progress: true,
           Button: true,
-          Popover: true,
-          PopoverTrigger: true,
-          PopoverContent: true,
-          Command: true,
-          CommandInput: true,
-          CommandList: true,
-          CommandEmpty: true,
-          CommandGroup: true,
-          CommandItem: true,
           Dialog: true,
           DialogContent: true,
           DialogHeader: true,
           DialogTitle: true,
           DialogDescription: true,
-          CheckIcon: true,
-          ChevronsUpDownIcon: true,
+          LightbulbIcon: true,
+          StatDisplay: {
+            template: '<div class="stat-display">hp atk def spa spd spe</div>',
+            props: ['stats', 'showBst'],
+          },
+          PokemonSelector: {
+            template: '<div class="pokemon-selector"></div>',
+            props: ['speciesSelection', 'selectedValue', 'disabled'],
+          },
+          HintDisplay: {
+            template: '<div class="hint-display">hints.firstHint hints.secondHint</div>',
+            props: ['hintLevel', 'types', 'abilities'],
+          },
         },
       },
     })
+  }
+
+  it('renders quiz component', () => {
+    const wrapper = mountComponent()
     expect(wrapper.exists()).toBe(true)
   })
 
   it('displays title in header', () => {
-    const wrapper = mount(BaseStatQuiz, {
-      props: {
-        settings: defaultSettings,
-      },
-      global: {
-        stubs: {
-          Progress: true,
-          Button: true,
-          Popover: true,
-          PopoverTrigger: true,
-          PopoverContent: true,
-          Command: true,
-          CommandInput: true,
-          CommandList: true,
-          CommandEmpty: true,
-          CommandGroup: true,
-          CommandItem: true,
-          Dialog: true,
-          DialogContent: true,
-          DialogHeader: true,
-          DialogTitle: true,
-          DialogDescription: true,
-          CheckIcon: true,
-          ChevronsUpDownIcon: true,
-        },
-      },
-    })
+    const wrapper = mountComponent()
     expect(wrapper.text()).toContain('title')
   })
 
   it('shows correct and incorrect counters', () => {
-    const wrapper = mount(BaseStatQuiz, {
-      props: {
-        settings: defaultSettings,
-      },
-      global: {
-        stubs: {
-          Progress: true,
-          Button: true,
-          Popover: true,
-          PopoverTrigger: true,
-          PopoverContent: true,
-          Command: true,
-          CommandInput: true,
-          CommandList: true,
-          CommandEmpty: true,
-          CommandGroup: true,
-          CommandItem: true,
-          Dialog: true,
-          DialogContent: true,
-          DialogHeader: true,
-          DialogTitle: true,
-          DialogDescription: true,
-          CheckIcon: true,
-          ChevronsUpDownIcon: true,
-        },
-      },
-    })
+    const wrapper = mountComponent()
     expect(wrapper.text()).toContain('correct')
     expect(wrapper.text()).toContain('incorrect')
     expect(wrapper.text()).toContain('0') // Initial score
   })
 
-  it('displays stats boxes', () => {
-    const wrapper = mount(BaseStatQuiz, {
-      props: {
-        settings: defaultSettings,
-      },
-      global: {
-        stubs: {
-          Progress: true,
-          Button: true,
-          Popover: true,
-          PopoverTrigger: true,
-          PopoverContent: true,
-          Command: true,
-          CommandInput: true,
-          CommandList: true,
-          CommandEmpty: true,
-          CommandGroup: true,
-          CommandItem: true,
-          Dialog: true,
-          DialogContent: true,
-          DialogHeader: true,
-          DialogTitle: true,
-          DialogDescription: true,
-          CheckIcon: true,
-          ChevronsUpDownIcon: true,
-        },
-      },
-    })
-    // Should display 6 stat boxes (HP, Atk, Def, SpA, SpD, Spe)
+  it('displays stats via StatDisplay component', () => {
+    const wrapper = mountComponent()
+    const statDisplay = wrapper.find('.stat-display')
+    expect(statDisplay.exists()).toBe(true)
+    // StatDisplay stub renders stat labels
     const statTexts = ['hp', 'atk', 'def', 'spa', 'spd', 'spe']
     statTexts.forEach((stat) => {
       expect(wrapper.text()).toContain(stat)
@@ -188,97 +125,18 @@ describe('BaseStatQuiz.vue', () => {
   })
 
   it('renders Reset Quiz button', () => {
-    const wrapper = mount(BaseStatQuiz, {
-      props: {
-        settings: defaultSettings,
-      },
-      global: {
-        stubs: {
-          Progress: true,
-          Popover: true,
-          PopoverTrigger: true,
-          PopoverContent: true,
-          Command: true,
-          CommandInput: true,
-          CommandList: true,
-          CommandEmpty: true,
-          CommandGroup: true,
-          CommandItem: true,
-          Dialog: true,
-          DialogContent: true,
-          DialogHeader: true,
-          DialogTitle: true,
-          DialogDescription: true,
-          CheckIcon: true,
-          ChevronsUpDownIcon: true,
-        },
-      },
-    })
-    // Component should render without errors
+    const wrapper = mountComponent()
     expect(wrapper.exists()).toBe(true)
   })
 
   it('displays timer in header', () => {
-    const wrapper = mount(BaseStatQuiz, {
-      props: {
-        settings: defaultSettings,
-      },
-      global: {
-        stubs: {
-          Progress: true,
-          Button: true,
-          Popover: true,
-          PopoverTrigger: true,
-          PopoverContent: true,
-          Command: true,
-          CommandInput: true,
-          CommandList: true,
-          CommandEmpty: true,
-          CommandGroup: true,
-          CommandItem: true,
-          Dialog: true,
-          DialogContent: true,
-          DialogHeader: true,
-          DialogTitle: true,
-          DialogDescription: true,
-          CheckIcon: true,
-          ChevronsUpDownIcon: true,
-        },
-      },
-    })
+    const wrapper = mountComponent()
     // Timer should display as 00:00 initially
     expect(wrapper.text()).toContain('00:00')
   })
 
   it('updates settings and regenerates pokemon', async () => {
-    const wrapper = mount(BaseStatQuiz, {
-      props: {
-        settings: defaultSettings,
-      },
-      global: {
-        stubs: {
-          Progress: true,
-          Button: true,
-          Popover: true,
-          PopoverTrigger: true,
-          PopoverContent: true,
-          Command: true,
-          CommandInput: true,
-          CommandList: true,
-          CommandEmpty: true,
-          CommandGroup: true,
-          CommandItem: true,
-          Dialog: true,
-          DialogContent: true,
-          DialogHeader: true,
-          DialogTitle: true,
-          DialogDescription: true,
-          CheckIcon: true,
-          ChevronsUpDownIcon: true,
-        },
-      },
-    })
-
+    const wrapper = mountComponent()
     const newSettings = { ...defaultSettings, generation: 8 }
     await wrapper.setProps({ settings: newSettings })
     expect(wrapper.props('settings').generation).toBe(8)

@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { CheckIcon, ChevronsUpDownIcon, LightbulbIcon } from "lucide-vue-next";
+import { LightbulbIcon, X } from "lucide-vue-next";
 import { computed, ref, watch, onMounted } from "vue";
 import { Dex } from "@pkmn/dex";
-import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useI18n } from "vue-i18n";
 import { getLocalizedPokemonName } from "@/lib/pokemonNameHelper";
+import StatDisplay from "@/components/StatDisplay.vue";
+import PokemonSelector from "@/components/PokemonSelector.vue";
+import HintDisplay from "@/components/HintDisplay.vue";
 import type { QuizSettings } from "@/types/settings";
 
 const { t, locale } = useI18n();
@@ -21,15 +21,14 @@ const props = defineProps({
   },
 })
 
-const searchQuery = ref("");
 const progressValue = ref(0);
 const correctGuesses = ref(0);
 const incorrectGuesses = ref(0);
 const elapsedTime = ref(0);
 const showCongratulations = ref(false);
+const showExplanation = ref(true);
 const hintLevel = ref(0); // 0 = no hints, 1 = first hint (types), 2 = second hint (abilities)
 const resultMessageRef = ref<HTMLDivElement | null>(null);
-const isMobile = ref(window.innerWidth < 768);
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 let loadingInterval: number | undefined;
 
@@ -60,7 +59,6 @@ const resetQuiz = () => {
   value.value = "";
   progressValue.value = 0;
   clearInterval(loadingInterval);
-  searchQuery.value = "";
   correctGuesses.value = 0;
   incorrectGuesses.value = 0;
   elapsedTime.value = 0;
@@ -125,18 +123,6 @@ const speciesSelection = computed(() =>
   })),
 );
 
-const filteredSpecies = computed(() => {
-  if (!searchQuery.value) {
-    return speciesSelection.value.slice(0, 50); // Show first 50 by default
-  }
-  return speciesSelection.value
-    .filter((pokemon) =>
-      pokemon.label.toLowerCase().includes(searchQuery.value.toLowerCase()),
-    )
-    .slice(0, 100); // Limit filtered results
-});
-
-const open = ref(false);
 const value = ref("");
 
 const selectedPokemon = computed(() =>
@@ -163,7 +149,6 @@ const nextPokemon = () => {
   currentPokemon.value = generateRandomPokemon();
   value.value = "";
   progressValue.value = 0;
-  searchQuery.value = "";
   hintLevel.value = 0;
   startTimer();
 };
@@ -184,8 +169,6 @@ function setLoading() {
 
 function selectPokemon(selectedValue: string) {
   value.value = selectedValue === value.value ? "" : selectedValue;
-  open.value = false;
-  searchQuery.value = "";
 
   // Update score
   if (isCorrect.value) {
@@ -239,7 +222,7 @@ function selectPokemon(selectedValue: string) {
       </div>
 
       <!-- Explanation Text -->
-      <div class="bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 px-4 md:px-6 py-3 md:py-4 rounded-lg text-sm md:text-base">
+      <div v-if="showExplanation" class="flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 px-4 md:px-6 py-3 md:py-4 rounded-lg text-sm md:text-base">
         <p>
           {{ t('explanation.intro') }}
           <strong>{{ t('explanation.hp') }}</strong> ({{ t('explanation.hpDesc') }}),
@@ -251,41 +234,17 @@ function selectPokemon(selectedValue: string) {
           <strong>{{ t('explanation.spe') }}</strong> ({{ t('explanation.speDesc') }}).
           {{ t('explanation.question') }}
         </p>
+        <button
+          @click="showExplanation = false"
+          class="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors cursor-pointer shrink-0"
+          :title="t('close')"
+        >
+          <X class="w-4 h-4" />
+        </button>
       </div>
 
       <!-- Stats Display Section -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        <div class="bg-muted rounded-lg p-4 md:p-6 text-center">
-          <span class="text-lg md:text-2xl lg:text-3xl font-semibold"
-            >{{ t('hp') }}: {{ currentStats.hp }}</span
-          >
-        </div>
-        <div class="bg-muted rounded-lg p-4 md:p-6 text-center">
-          <span class="text-lg md:text-2xl lg:text-3xl font-semibold"
-            >{{ t('atk') }}: {{ currentStats.attack }}</span
-          >
-        </div>
-        <div class="bg-muted rounded-lg p-4 md:p-6 text-center">
-          <span class="text-lg md:text-2xl lg:text-3xl font-semibold"
-            >{{ t('def') }}: {{ currentStats.defense }}</span
-          >
-        </div>
-        <div class="bg-muted rounded-lg p-4 md:p-6 text-center">
-          <span class="text-lg md:text-2xl lg:text-3xl font-semibold"
-            >{{ t('spa') }}: {{ currentStats.specialAttack }}</span
-          >
-        </div>
-        <div class="bg-muted rounded-lg p-4 md:p-6 text-center">
-          <span class="text-lg md:text-2xl lg:text-3xl font-semibold"
-            >{{ t('spd') }}: {{ currentStats.specialDefense }}</span
-          >
-        </div>
-        <div class="bg-muted rounded-lg p-4 md:p-6 text-center">
-          <span class="text-lg md:text-2xl lg:text-3xl font-semibold"
-            >{{ t('spe') }}: {{ currentStats.speed }}</span
-          >
-        </div>
-      </div>
+      <StatDisplay :stats="currentStats" :show-bst="true" />
 
       <!-- Hint Section -->
       <div v-if="settings.hintsEnabled" class="flex flex-col gap-4">
@@ -300,134 +259,21 @@ function selectPokemon(selectedValue: string) {
           {{ t('requestHint') }}
         </Button>
         
-        <div v-if="hintLevel >= 1" class="bg-yellow-50 dark:bg-yellow-950 text-yellow-900 dark:text-yellow-100 px-4 md:px-6 py-3 md:py-4 rounded-lg">
-          <div class="flex flex-col gap-2">
-            <div>
-              <strong>{{ t('hints.firstHint') }}:</strong>
-              <span class="ml-2">{{ currentPokemon.types.join(', ') }}</span>
-            </div>
-            <div v-if="hintLevel >= 2">
-              <strong>{{ t('hints.secondHint') }}:</strong>
-              <span class="ml-2">{{ Object.values(currentPokemon.abilities).filter(a => a).join(', ') }}</span>
-            </div>
-          </div>
-        </div>
+        <HintDisplay
+          :hint-level="hintLevel"
+          :types="currentPokemon.types"
+          :abilities="Object.values(currentPokemon.abilities).filter(a => !!a) as string[]"
+        />
       </div>
 
       <!-- Selection Section -->
       <div class="flex flex-col gap-4">
-        <!-- Mobile: Sheet Modal -->
-        <Sheet v-if="isMobile" v-model:open="open" :disabled="progressValue > 0">
-          <SheetTrigger as-child>
-            <Button
-              variant="outline"
-              role="combobox"
-              :aria-expanded="open"
-              class="justify-between w-full cursor-pointer h-10 md:h-12"
-              :disabled="progressValue > 0"
-            >
-              <span class="text-sm md:text-base truncate">
-                {{ selectedPokemon?.label || t('selectPokemon') }}
-              </span>
-              <ChevronsUpDownIcon class="opacity-50 flex-shrink-0" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" class="h-[80vh] flex flex-col">
-            <SheetHeader>
-              <SheetTitle>{{ t('selectPokemon') }}</SheetTitle>
-            </SheetHeader>
-            <Command class="flex-1 flex flex-col">
-              <CommandInput
-                v-model="searchQuery"
-                class="h-9 w-full"
-                :placeholder="t('searchPlaceholder')"
-              />
-              <CommandList class="flex-1 overflow-y-auto">
-                <CommandEmpty v-if="filteredSpecies.length === 0"
-                  >{{ t('noResults') }}</CommandEmpty
-                >
-                <CommandGroup v-else>
-                  <CommandItem
-                    v-for="pokemon in filteredSpecies"
-                    :key="pokemon.value"
-                    :value="pokemon.value"
-                    class="cursor-pointer"
-                    @select="
-                      (ev) => {
-                        selectPokemon(ev.detail.value as string);
-                      }
-                    "
-                  >
-                    {{ pokemon.label }}
-                    <CheckIcon
-                      :class="
-                        cn(
-                          'ml-auto',
-                          value === pokemon.value ? 'opacity-100' : 'opacity-0',
-                        )
-                      "
-                    />
-                  </CommandItem>
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </SheetContent>
-        </Sheet>
-
-        <!-- Desktop: Popover -->
-        <Popover v-else v-model:open="open" :disabled="progressValue > 0">
-          <PopoverTrigger as-child>
-            <Button
-              variant="outline"
-              role="combobox"
-              :aria-expanded="open"
-              class="justify-between w-full cursor-pointer h-10 md:h-12"
-              :disabled="progressValue > 0"
-            >
-              <span class="text-sm md:text-base truncate">
-                {{ selectedPokemon?.label || t('selectPokemon') }}
-              </span>
-              <ChevronsUpDownIcon class="opacity-50 flex-shrink-0" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent class="p-0 w-full" side="top" align="center" :side-offset="8">
-            <Command>
-              <CommandInput
-                v-model="searchQuery"
-                class="h-9 w-full"
-                :placeholder="t('searchPlaceholder')"
-              />
-              <CommandList>
-                <CommandEmpty v-if="filteredSpecies.length === 0"
-                  >{{ t('noResults') }}</CommandEmpty
-                >
-                <CommandGroup v-else>
-                  <CommandItem
-                    v-for="pokemon in filteredSpecies"
-                    :key="pokemon.value"
-                    :value="pokemon.value"
-                    class="cursor-pointer"
-                    @select="
-                      (ev) => {
-                        selectPokemon(ev.detail.value as string);
-                      }
-                    "
-                  >
-                    {{ pokemon.label }}
-                    <CheckIcon
-                      :class="
-                        cn(
-                          'ml-auto',
-                          value === pokemon.value ? 'opacity-100' : 'opacity-0',
-                        )
-                      "
-                    />
-                  </CommandItem>
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <PokemonSelector
+          :species-selection="speciesSelection"
+          :selected-value="value"
+          :disabled="progressValue > 0"
+          @select="selectPokemon"
+        />
 
         <!-- Result Message -->
         <div v-if="isCorrect !== null && progressValue > 0" ref="resultMessageRef" class="text-center">

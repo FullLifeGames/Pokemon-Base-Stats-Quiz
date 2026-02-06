@@ -29,6 +29,7 @@
   "spa": "SpA",
   "spd": "SpD",
   "spe": "Spe",
+  "bst": "BST",
   "correctMessage": "✓ Correct! That's {pokemon}!",
   "alsoCorrect": "Also correct",
   "incorrectMessage": "✗ Incorrect! The Pokémon was {pokemon}.",

@@ -148,6 +148,19 @@ describe('VsGame.vue', () => {
           LogOut: true,
           Swords: true,
           Zap: true,
+          X: true,
+          StatDisplay: {
+            template: '<div class="stat-display">hp atk def spa spd spe</div>',
+            props: ['stats', 'showBst'],
+          },
+          PokemonSelector: {
+            template: '<div class="pokemon-selector"></div>',
+            props: ['speciesSelection', 'selectedValue', 'disabled'],
+          },
+          HintDisplay: {
+            template: '<div class="hint-display"></div>',
+            props: ['hintLevel', 'types', 'abilities'],
+          },
         },
       },
     })
@@ -237,19 +250,10 @@ describe('VsGame.vue', () => {
       })
     })
 
-    it('computes BST correctly', () => {
+    it('passes stats to StatDisplay component', () => {
       const wrapper = mountComponent()
-      const vm = wrapper.vm as any
-      expect(vm.bst).toBe(320) // 35+55+40+50+50+90
-    })
-
-    it('creates stat entries with labels and colors', () => {
-      const wrapper = mountComponent()
-      const vm = wrapper.vm as any
-      expect(vm.statEntries).toHaveLength(6)
-      expect(vm.statEntries[0].key).toBe('hp')
-      expect(vm.statEntries[0].value).toBe(35)
-      expect(vm.statEntries[0].color).toContain('red')
+      const statDisplay = wrapper.find('.stat-display')
+      expect(statDisplay.exists()).toBe(true)
     })
   })
 
@@ -262,40 +266,10 @@ describe('VsGame.vue', () => {
       expect(vm.speciesSelection[0].value).toBe('pikachu')
     })
 
-    it('filters species by search query', async () => {
+    it('passes species selection to PokemonSelector', () => {
       const wrapper = mountComponent()
-      const vm = wrapper.vm as any
-      
-      vm.searchQuery = 'char'
-      await wrapper.vm.$nextTick()
-      
-      expect(vm.filteredSpecies).toHaveLength(1)
-      expect(vm.filteredSpecies[0].value).toBe('charizard')
-    })
-
-    it('limits filtered results to 100 items', () => {
-      const manySpecies = Array.from({ length: 150 }, (_, i) => ({
-        name: `pokemon${i}`,
-        baseStats: { hp: 50, atk: 50, def: 50, spa: 50, spd: 50, spe: 50 },
-      })) as Species[]
-
-      const wrapper = mountComponent({ species: manySpecies })
-      const vm = wrapper.vm as any
-      
-      vm.searchQuery = 'pokemon'
-      expect(vm.filteredSpecies.length).toBeLessThanOrEqual(100)
-    })
-
-    it('shows first 50 species when no search query', () => {
-      const manySpecies = Array.from({ length: 150 }, (_, i) => ({
-        name: `pokemon${i}`,
-        baseStats: { hp: 50, atk: 50, def: 50, spa: 50, spd: 50, spe: 50 },
-      })) as Species[]
-
-      const wrapper = mountComponent({ species: manySpecies })
-      const vm = wrapper.vm as any
-      
-      expect(vm.filteredSpecies).toHaveLength(50)
+      const selector = wrapper.find('.pokemon-selector')
+      expect(selector.exists()).toBe(true)
     })
   })
 
@@ -409,29 +383,4 @@ describe('VsGame.vue', () => {
     })
   })
 
-  describe('Responsive Behavior', () => {
-    it('detects mobile viewport', () => {
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 500,
-      })
-      
-      const wrapper = mountComponent()
-      const vm = wrapper.vm as any
-      expect(vm.isMobile).toBe(true)
-    })
-
-    it('detects desktop viewport', () => {
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 1200,
-      })
-      
-      const wrapper = mountComponent()
-      const vm = wrapper.vm as any
-      expect(vm.isMobile).toBe(false)
-    })
-  })
 })
