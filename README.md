@@ -4,18 +4,38 @@ A fully-featured interactive quiz application that challenges users to identify 
 
 ## 🎮 Features
 
-### Core Gameplay
+### Game Modes
+
+#### Solo Quiz Mode
 - **Base Stats Recognition**: Displays HP, Attack, Defense, Special Attack, Special Defense, and Speed stats
 - **Smart Selection**: Accepts any Pokémon with matching stats (not just the exact name)
 - **Real-Time Scoring**: Track correct and incorrect answers with live counters
 - **Progress Animation**: Smooth loading animation between questions with auto-advance
 - **Timer**: Tracks quiz duration during guessing and pauses during results
+- **Hint System**: Request up to 2 hints (types and abilities) when enabled in settings
+
+#### VS Mode (Multiplayer)
+- **Peer-to-Peer Multiplayer**: Real-time competitive gameplay via WebRTC (PeerJS)
+- **Room-Based Matchmaking**: Create or join rooms with 6-character codes
+- **Multiple Roles**: Play as Host, Guest, or Spectator
+- **Head-to-Head Competition**: Race to identify Pokémon faster than your opponent
+- **Speed Bonus**: Correct answers within 5 seconds earn bonus points
+- **Auto Hints**: Hints automatically revealed after 15 and 30 seconds
+- **Live Status Indicators**: See when your opponent has answered
+- **Round Results**: Detailed feedback showing both players' answers and timing
+- **Match Scoring**: First to reach the configured score wins
+- **Rematch System**: Request and accept rematches after a match ends
+- **Session Persistence**: Automatically reconnect if disconnected
+- **Spectator Mode**: Watch matches in real-time without participating
+- **Forfeit Option**: Gracefully exit matches with confirmation dialog
 
 ### Customization & Settings
 - **Generation Filters**: Set minimum and maximum Pokémon generations (1-9)
 - **Evolution Stage Filter**: Option to show only fully evolved Pokémon
-- **Win Condition**: Configure custom win scores (default: 10 correct answers)
-- **Dynamic Difficulty**: Adjust quiz parameters on-the-fly
+- **Win Condition**: Configure custom win scores (default: 10 correct for solo, 5 for VS)
+- **Time Limits**: Set round time limits for VS Mode (optional)
+- **Hint Toggle**: Enable/disable hint system in solo mode
+- **Dynamic Configuration**: Adjust quiz parameters on-the-fly (host only in VS Mode)
 
 ### Internationalization
 - **English & German Support**: Full i18n implementation with vue-i18n
@@ -29,9 +49,10 @@ A fully-featured interactive quiz application that challenges users to identify 
 - **Congratulations Dialog**: Celebrates quiz completion with final stats
 
 ### Testing & Quality
-- **22 Unit Tests**: Comprehensive test coverage with Vitest
+- **275+ Unit Tests**: Comprehensive test coverage with Vitest
 - **Type Safety**: Full TypeScript support throughout
 - **CI-Ready**: Tests can be integrated into GitHub Actions
+- **Component Testing**: Dedicated tests for all UI components including shared components
 
 ## 🛠️ Tech Stack
 
@@ -44,6 +65,11 @@ A fully-featured interactive quiz application that challenges users to identify 
 - **@pkmn/dex** (v0.10.6) - Pokémon stats and species data
 - **PokéAPI v2** - German Pokémon localization
 - **vue-i18n** (v11.2.8) - Internationalization
+
+### Multiplayer & Networking
+- **PeerJS** (v1.5.4) - WebRTC peer-to-peer connections
+- **Real-time Communication** - Direct browser-to-browser gameplay
+- **Session Management** - Automatic reconnection and state recovery
 
 ### UI & Styling
 - **Tailwind CSS** (v4.1.18) - Utility-first CSS framework
@@ -61,23 +87,34 @@ A fully-featured interactive quiz application that challenges users to identify 
 ```
 src/
 ├── components/
-│   ├── __tests__/              # Unit tests (22 tests)
-│   ├── BaseStatQuiz.vue        # Main quiz component
+│   ├── __tests__/              # Unit tests (275+ tests)
+│   ├── BaseStatQuiz.vue        # Solo quiz mode component
+│   ├── VsMode.vue              # VS Mode coordinator
+│   ├── VsLobby.vue             # Multiplayer lobby
+│   ├── VsGame.vue              # Multiplayer game screen
+│   ├── VsResults.vue           # Match results screen
+│   ├── StatDisplay.vue         # Shared stat visualization
+│   ├── PokemonSelector.vue     # Shared Pokemon picker
+│   ├── HintDisplay.vue         # Shared hint display
 │   ├── AppSidebar.vue          # Settings sidebar
 │   ├── GenerationSelect.vue    # Reusable generation dropdown
 │   ├── ModeToggle.vue          # Dark/light mode toggle
 │   └── ui/                     # shadcn-vue components
+├── composables/
+│   ├── useVsGame.ts            # VS Mode game logic
+│   └── usePeerConnection.ts    # WebRTC connection management
 ├── types/
-│   └── settings.ts             # Quiz settings interface
+│   ├── settings.ts             # Quiz settings interface
+│   └── vsMode.ts               # VS Mode type definitions
 ├── lib/
-│   ├── utils.ts               # Utility functions
-│   └── pokemonNameHelper.ts   # Pokémon name localization
+│   ├── utils.ts                # Utility functions
+│   └── pokemonNameHelper.ts    # Pokémon name localization
 ├── i18n/
 │   └── locales/
-│       ├── en.json            # English translations
-│       └── de.json            # German translations
-├── App.vue                     # Root component
-└── main.ts                     # Entry point
+│       ├── en.json             # English translations
+│       └── de.json             # German translations
+├── App.vue                      # Root component
+└── main.ts                      # Entry point
 
 scripts/
 └── generatePokemonNames.js     # PokéAPI name generation script
@@ -141,24 +178,38 @@ pnpm test:ui
 pnpm test:coverage
 ```
 
-**Test Coverage**: 22 unit tests covering all custom components
-- GenerationSelect: 7 tests
+**Test Coverage**: 275+ unit tests covering all components, composables, and logic
 - BaseStatQuiz: 7 tests
+- VsMode: 24 tests
+- VsGame: 26 tests
+- VsLobby: 25 tests
+- VsResults: 28 tests
+- useVsGame composable: 29 tests
+- usePeerConnection composable: 14 tests
+- StatDisplay: 21 tests
+- PokemonSelector: 23 tests
+- HintDisplay: 24 tests
+- GenerationSelect: 7 tests
 - ModeToggle: 2 tests
 - App: 4 tests
 - AppSidebar: 2 tests
+- And more...
 
 For detailed testing information, see [TESTING.md](./TESTING.md)
 
 ## 📖 Usage
 
+### Solo Mode
+
 1. **Configure Settings** (Left Sidebar):
    - Set generation range (minimum & maximum)
    - Toggle fully evolved Pokémon only
    - Set win score goal
+   - Enable/disable hints
 
 2. **Play the Quiz**:
    - View displayed base stats
+   - Request hints if enabled (types, then abilities)
    - Search and select the Pokémon
    - Watch score update and timer count
 
@@ -166,6 +217,49 @@ For detailed testing information, see [TESTING.md](./TESTING.md)
    - Reach the configured win score
    - View congratulations dialog with final stats and time
    - Reset to play again
+
+### VS Mode (Multiplayer)
+
+#### Creating a Room
+1. **Select VS Mode** from the mode selection screen
+2. **Click "Create Room"** to generate a 6-character room code
+3. **Configure Settings** (Host only):
+   - Set generation range
+   - Toggle fully evolved Pokémon only
+   - Set max score (default: 5)
+   - Set time limit per round (optional)
+4. **Share Room Code** with your opponent
+5. **Wait for Opponent** or spectators to join
+6. **Click "Start Match"** when ready
+
+#### Joining a Room
+1. **Select VS Mode** from the mode selection screen
+2. **Click "Join Room"** tab
+3. **Enter Room Code** (6 characters)
+4. **Choose Role**:
+   - **Join as Player**: Compete in the match (2 players max)
+   - **Join as Spectator**: Watch the match (unlimited spectators)
+5. **Wait for Host** to start the match
+
+#### Playing VS Mode
+1. **Countdown**: 3-2-1 countdown before each round
+2. **View Stats**: Both players see the same Pokémon stats
+3. **Race to Answer**: First correct answer wins the round
+4. **Speed Bonus**: Answer within 5 seconds for bonus point
+5. **Auto Hints**: 
+   - Types revealed after 15 seconds
+   - Abilities revealed after 30 seconds
+6. **Round Results**: See both players' answers and timing
+7. **Next Round**: Automatic advance after 3 seconds
+8. **Match End**: First to max score wins
+9. **Rematch**: Request rematch or return to lobby
+
+#### VS Mode Features
+- **Live Opponent Status**: See when opponent has answered
+- **Session Recovery**: Automatically reconnect if disconnected
+- **Forfeit**: Gracefully exit with confirmation (opponent wins)
+- **Spectator View**: Watch matches without participating
+- **Real-time Sync**: All players see the same state
 
 ## 🌍 Internationalization
 
@@ -214,6 +308,9 @@ Customize the difficulty by setting how many correct answers are needed to compl
 - Pokémon with identical base stats will both be accepted as correct (by design)
 - Generation 9 (Paldea) is the maximum supported generation
 - Some Pokémon forms may not have German names (falls back to English)
+- VS Mode requires both players to have stable internet connections
+- VS Mode uses a free PeerJS server which may have occasional downtime
+- Room codes expire when all players disconnect
 
 ## 📦 Dependencies
 
@@ -222,6 +319,7 @@ See `package.json` for complete dependency list. Key packages:
 - `tailwindcss` (4.1.18) - Styling
 - `vue-i18n` (11.2.8) - Localization
 - `@pkmn/dex` (0.10.6) - Data
+- `peerjs` (1.5.4) - WebRTC multiplayer
 - `vite` (7.2.5 via rolldown) - Build tool
 - `vitest` (4.0.18) - Testing
 
@@ -243,5 +341,9 @@ This project was developed as an **experiment with AI-assisted coding** using Gi
 - Test-driven development practices
 - Multi-language support implementation
 - Advanced state management patterns
+- Real-time multiplayer with WebRTC/PeerJS
+- Peer-to-peer networking without backend servers
+- Component reusability and DRY principles
+- Comprehensive unit testing (275+ tests)
 
-The codebase serves as a reference for combining AI assistance with best practices in web development. All features were implemented iteratively with quality assurance and comprehensive testing.
+The codebase serves as a reference for combining AI assistance with best practices in web development. All features were implemented iteratively with quality assurance and comprehensive testing. The VS Mode showcases advanced real-time multiplayer capabilities entirely in the browser without requiring a backend server.
