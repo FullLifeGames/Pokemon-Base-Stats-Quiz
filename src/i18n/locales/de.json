@@ -1,0 +1,60 @@
+{
+  "title": "Pokémon-Stat-Quiz: Erkenne die Stats!",
+  "correct": "Korrekt",
+  "incorrect": "Falsch",
+  "resetQuiz": "Quiz zurücksetzen",
+  "selectPokemon": "Pokémon auswählen...",
+  "searchPlaceholder": "Pokémon durchsuchen...",
+  "noResults": "Keine Pokémon gefunden.",
+  "explanation": {
+    "intro": "Unten siehst du die Base-Stats eines Pokémon. Die Base-Stats bestimmen, wie stark ein Pokémon in verschiedenen Bereichen ist:",
+    "hp": "KP",
+    "hpDesc": "Kraftpunkte",
+    "atk": "Atk",
+    "atkDesc": "Angriff",
+    "def": "Def",
+    "defDesc": "Verteidigung",
+    "spa": "SpA",
+    "spaDesc": "Spezial-Angriff",
+    "spd": "SpD",
+    "spdDesc": "Spezial-Verteidigung",
+    "spe": "Spe",
+    "speDesc": "Initiative",
+    "and": "und",
+    "question": "Kannst du erraten, zu welchem Pokémon diese Stats gehören?"
+  },
+  "hp": "KP",
+  "atk": "Atk",
+  "def": "Def",
+  "spa": "SpA",
+  "spd": "SpD",
+  "spe": "Spe",
+  "correctMessage": "✓ Richtig! Das ist {pokemon}!",
+  "alsoCorrect": "Auch korrekt",
+  "incorrectMessage": "✗ Falsch! Das Pokémon war {pokemon}.",
+  "loading": "Nächstes Pokémon wird geladen...",
+  "sidebar": {
+    "settings": "Einstellungen",
+    "generation": "Ziel-Generation",
+    "minGeneration": "Minimale Generation",
+    "maxGeneration": "Maximale Generation",
+    "fullyEvolvedOnly": "Nur vollständig entwickelte Pokémon",
+    "maxScore": "Gewinn-Score",
+    "hintsEnabled": "Hinweise aktivieren",
+    "madeBy": "Erstellt von",
+    "english": "English",
+    "deutsch": "Deutsch"
+  },
+  "requestHint": "Hinweis anfordern",
+  "hints": {
+    "firstHint": "Typen",
+    "secondHint": "Fähigkeiten"
+  },
+  "congratulations": {
+    "title": "Glückwunsch!",
+    "message": "Du hast das Quiz mit einer perfekten Punktzahl abgeschlossen!",
+    "finalScore": "Endscore",
+    "timeElapsed": "Verstrichene Zeit",
+    "startNewQuiz": "Neues Quiz starten"
+  }
+}

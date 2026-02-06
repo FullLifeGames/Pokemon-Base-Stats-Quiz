@@ -1,0 +1,60 @@
+{
+  "title": "Pokémon Stats Quiz: Identify the Stats!",
+  "correct": "Correct",
+  "incorrect": "Incorrect",
+  "resetQuiz": "Reset Quiz",
+  "selectPokemon": "Select Pokémon...",
+  "searchPlaceholder": "Search Pokémon...",
+  "noResults": "No Pokémon found.",
+  "explanation": {
+    "intro": "Below are the base stats for a Pokémon. Base stats determine how strong a Pokémon is in different areas:",
+    "hp": "HP",
+    "hpDesc": "Hit Points",
+    "atk": "Atk",
+    "atkDesc": "Attack",
+    "def": "Def",
+    "defDesc": "Defense",
+    "spa": "SpA",
+    "spaDesc": "Special Attack",
+    "spd": "SpD",
+    "spdDesc": "Special Defense",
+    "spe": "Spe",
+    "speDesc": "Speed",
+    "and": "and",
+    "question": "Can you guess which Pokémon these stats belong to?"
+  },
+  "hp": "HP",
+  "atk": "Atk",
+  "def": "Def",
+  "spa": "SpA",
+  "spd": "SpD",
+  "spe": "Spe",
+  "correctMessage": "✓ Correct! That's {pokemon}!",
+  "alsoCorrect": "Also correct",
+  "incorrectMessage": "✗ Incorrect! The Pokémon was {pokemon}.",
+  "loading": "Loading next Pokémon...",
+  "sidebar": {
+    "settings": "Settings",
+    "generation": "Target Generation",
+    "minGeneration": "Minimum Generation",
+    "maxGeneration": "Maximum Generation",
+    "fullyEvolvedOnly": "Fully Evolved Pokémon Only",
+    "maxScore": "Win Score",
+    "hintsEnabled": "Enable Hints",
+    "madeBy": "Made by",
+    "english": "English",
+    "deutsch": "Deutsch"
+  },
+  "requestHint": "Request Hint",
+  "hints": {
+    "firstHint": "Types",
+    "secondHint": "Abilities"
+  },
+  "congratulations": {
+    "title": "Congratulations!",
+    "message": "You've completed the quiz with a perfect score!",
+    "finalScore": "Final Score",
+    "timeElapsed": "Time Elapsed",
+    "startNewQuiz": "Start New Quiz"
+  }
+}
