@@ -6,7 +6,7 @@ import VsMode from '@/components/VsMode.vue'
 const mockUseVsGame = {
   gameState: { value: 'idle' },
   roomCode: { value: '' },
-  settings: { value: { generation: 9, maxScore: 5, timeLimit: 60, fullyEvolvedOnly: true, minGeneration: 1, maxGeneration: 9, hintsEnabled: true } },
+  settings: { value: { generation: 9, maxScore: 5, timeLimit: 40, fullyEvolvedOnly: true, minGeneration: 1, maxGeneration: 9, hintsEnabled: true } },
   host: { value: { name: 'Host', role: 'host', score: 0, hasAnswered: false, lastGuess: null, lastGuessCorrect: null, lastGuessTimestamp: null, connected: true } },
   guest: { value: null },
   spectators: { value: [] },

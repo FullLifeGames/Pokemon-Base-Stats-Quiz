@@ -77,12 +77,12 @@ const timerProgress = computed(() => {
 
 const timerUrgent = computed(() => {
   if (props.settings.timeLimit <= 0) return false
-  return props.currentRound.timeRemaining <= Math.floor(props.settings.timeLimit / 5)
+  return props.currentRound.timeRemaining <= Math.floor(props.settings.timeLimit * 1 / 4)
 })
 
 const timerWarning = computed(() => {
   if (props.settings.timeLimit <= 0) return false
-  return props.currentRound.timeRemaining <= Math.floor(props.settings.timeLimit * 2 / 5)
+  return props.currentRound.timeRemaining <= Math.floor(props.settings.timeLimit / 2)
 })
 
 // Score progress

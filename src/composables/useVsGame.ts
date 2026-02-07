@@ -604,10 +604,10 @@ export function useVsGame() {
       const totalTime = settings.value.timeLimit
       const remaining = currentRound.value.timeRemaining
       
-      if (remaining <= Math.floor(totalTime * 2 / 5) && currentRound.value.hintLevel < 1) {
+      if (remaining <= Math.floor(totalTime / 2) && currentRound.value.hintLevel < 1) {
         currentRound.value.hintLevel = 1
       }
-      if (remaining <= Math.floor(totalTime / 5) && currentRound.value.hintLevel < 2) {
+      if (remaining <= Math.floor(totalTime * 1 / 4) && currentRound.value.hintLevel < 2) {
         currentRound.value.hintLevel = 2
       }
 

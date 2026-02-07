@@ -71,7 +71,7 @@ describe('VsGame.vue', () => {
     isSpectator: false,
     gameState: 'playing',
     species: mockSpecies,
-    settings: { maxScore: 5, timeLimit: 60 },
+    settings: { maxScore: 5, timeLimit: 40 },
     opponentAnswered: false,
   }
 
@@ -194,7 +194,7 @@ describe('VsGame.vue', () => {
   describe('Timer Display', () => {
     it('shows timer when time limit is set', () => {
       const wrapper = mountComponent({
-        settings: { maxScore: 5, timeLimit: 60 },
+        settings: { maxScore: 5, timeLimit: 40 },
         currentRound: createRound({ timeRemaining: 45 }),
       })
       const vm = wrapper.vm as any
@@ -219,7 +219,7 @@ describe('VsGame.vue', () => {
 
     it('marks timer as urgent when below 20% remaining', () => {
       const wrapper = mountComponent({
-        settings: { maxScore: 5, timeLimit: 60 },
+        settings: { maxScore: 5, timeLimit: 40 },
         currentRound: createRound({ timeRemaining: 10 }),
       })
       const vm = wrapper.vm as any
@@ -228,7 +228,7 @@ describe('VsGame.vue', () => {
 
     it('marks timer as warning when below 40% remaining', () => {
       const wrapper = mountComponent({
-        settings: { maxScore: 5, timeLimit: 60 },
+        settings: { maxScore: 5, timeLimit: 40 },
         currentRound: createRound({ timeRemaining: 20 }),
       })
       const vm = wrapper.vm as any

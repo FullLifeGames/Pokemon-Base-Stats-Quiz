@@ -107,7 +107,7 @@ export const defaultVsRoomSettings: VsRoomSettings = {
   fullyEvolvedOnly: true,
   maxScore: 5,
   hintsEnabled: true,
-  timeLimit: 60,
+  timeLimit: 40,
 }
 
 /**

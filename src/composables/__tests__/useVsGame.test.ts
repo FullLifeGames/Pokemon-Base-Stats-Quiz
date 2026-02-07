@@ -59,7 +59,8 @@ describe('useVsGame', () => {
         maxGeneration: 9,
         maxScore: 5,
         fullyEvolvedOnly: true,
-        timeLimit: 60,
+        hintsEnabled: true,
+        timeLimit: 40,
       })
     })
 

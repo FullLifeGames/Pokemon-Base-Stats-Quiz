@@ -29,7 +29,7 @@ describe('VsLobby.vue', () => {
     fullyEvolvedOnly: true,
     maxScore: 5,
     hintsEnabled: true,
-    timeLimit: 60,
+    timeLimit: 40,
   }
 
   const defaultProps = {
