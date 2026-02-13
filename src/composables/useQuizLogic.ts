@@ -1,4 +1,4 @@
-import { computed, type Ref, type ComputedRef } from 'vue'
+import { computed, ref, type Ref, type ComputedRef } from 'vue'
 import { Dex, type Species } from '@pkmn/dex'
 import { getLocalizedPokemonName } from '@/lib/pokemonNameHelper'
 
@@ -80,10 +80,58 @@ export function useQuizLogic(
 
   // ── Random Pokémon ─────────────────────────────────────────────────
 
+  // Track recent Pokémon to avoid immediate repetition
+  const recentPokemon = ref<string[]>([])
+  const RECENT_HISTORY_SIZE = 10
+
+  // Group species by their stat signature to deduplicate identical stats
+  const statGroups = computed(() => {
+    const groups = new Map<string, Species[]>()
+    
+    for (const pokemon of species.value) {
+      const statsKey = `${pokemon.baseStats.hp}-${pokemon.baseStats.atk}-${pokemon.baseStats.def}-${pokemon.baseStats.spa}-${pokemon.baseStats.spd}-${pokemon.baseStats.spe}`
+      if (!groups.has(statsKey)) {
+        groups.set(statsKey, [])
+      }
+      groups.get(statsKey)!.push(pokemon)
+    }
+    
+    return groups
+  })
+
   function generateRandomPokemon(): Species {
-    const list = species.value
-    const idx = Math.floor(Math.random() * list.length)
-    return list[idx]!
+    // Filter out recent Pokémon from each group
+    const availableGroups: Species[][] = []
+    for (const group of statGroups.value.values()) {
+      const nonRecentInGroup = group.filter(p => !recentPokemon.value.includes(p.name))
+      if (nonRecentInGroup.length > 0) {
+        availableGroups.push(nonRecentInGroup)
+      }
+    }
+    
+    // If all Pokémon are recent (edge case with very small pools), reset history
+    if (availableGroups.length === 0) {
+      recentPokemon.value = []
+      for (const group of statGroups.value.values()) {
+        availableGroups.push(group)
+      }
+    }
+    
+    // Pick a random stat group (ensures equal probability regardless of stat duplicates)
+    const groupIdx = Math.floor(Math.random() * availableGroups.length)
+    const selectedGroup = availableGroups[groupIdx]!
+    
+    // Pick a random Pokémon from that group (for variety among stat twins)
+    const pokemonIdx = Math.floor(Math.random() * selectedGroup.length)
+    const selected = selectedGroup[pokemonIdx]!
+    
+    // Update recent history
+    recentPokemon.value.push(selected.name)
+    if (recentPokemon.value.length > RECENT_HISTORY_SIZE) {
+      recentPokemon.value.shift()
+    }
+    
+    return selected
   }
 
   // ── Stats helpers ──────────────────────────────────────────────────

@@ -205,6 +205,51 @@ describe('useQuizLogic', () => {
         expect(p.num).toBeGreaterThan(0)
       }
     })
+
+    it('avoids repeating the same Pokémon in short succession', () => {
+      const { generateRandomPokemon } = setup()
+      
+      // Generate several Pokémon and check that immediate repeats are avoided
+      let previous = generateRandomPokemon().name
+      let immediateRepeatCount = 0
+      
+      // With proper anti-repeat logic, we should see very few immediate repeats
+      // (only possible if the pool is extremely small)
+      for (let i = 0; i < 50; i++) {
+        const current = generateRandomPokemon().name
+        if (current === previous) {
+          immediateRepeatCount++
+        }
+        previous = current
+      }
+      
+      // With 6 unique Pokémon in our mock, immediate repeats should be very rare
+      // With history of 10, probability of repeat should be near zero
+      expect(immediateRepeatCount).toBeLessThan(3)
+    })
+
+    it('weighs Pokémon with identical stats equally', () => {
+      const { generateRandomPokemon } = setup()
+      const results = new Map<string, number>()
+      
+      // Generate many Pokémon to check distribution
+      for (let i = 0; i < 200; i++) {
+        const pokemon = generateRandomPokemon()
+        const statsKey = `${pokemon.baseStats.hp}-${pokemon.baseStats.atk}-${pokemon.baseStats.def}-${pokemon.baseStats.spa}-${pokemon.baseStats.spd}-${pokemon.baseStats.spe}`
+        results.set(statsKey, (results.get(statsKey) || 0) + 1)
+      }
+      
+      // Our mock has stat-twin-a and stat-twin-b with identical stats
+      // Together they should not be overly represented compared to unique stat Pokémon
+      // This is a probabilistic test, so we just check they don't dominate
+      const counts = Array.from(results.values())
+      const max = Math.max(...counts)
+      const min = Math.min(...counts)
+      
+      // No stat signature should appear more than 4x as often as the least common
+      // (with proper weighting, distribution should be more even)
+      expect(max / min).toBeLessThan(4)
+    })
   })
 
   // ── getPokemonStats ────────────────────────────────────────────────
