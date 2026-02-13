@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import GenerationSelect from './GenerationSelect.vue'
 import { Copy, Users, Eye, ArrowLeft, Loader2 } from 'lucide-vue-next'
 import type { VsRoomSettings } from '@/types/vsMode'
+import type { GenerationNum } from '@pkmn/dex'
 
 const { t } = useI18n()
 
@@ -47,10 +48,14 @@ const copyRoomCode = async () => {
   await navigator.clipboard.writeText(props.roomCode)
 }
 
-const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSettings[K]) => {
+const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSettings[K] | number) => {
   // Only allow settings updates before room is created (during idle state)
   if (props.gameState === 'idle') {
-    emit('update-settings', { ...props.settings, [key]: value })
+    if (key === 'generation' || key === 'minGeneration' || key === 'maxGeneration') {
+      emit('update-settings', { ...props.settings, [key]: value as GenerationNum })
+    } else {
+      emit('update-settings', { ...props.settings, [key]: value })
+    }
   }
 }
 </script>

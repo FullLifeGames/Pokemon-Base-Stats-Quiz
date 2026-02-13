@@ -34,6 +34,7 @@
   "alsoCorrect": "Auch korrekt",
   "incorrectMessage": "✗ Falsch! Das Pokémon war {pokemon}.",
   "loading": "Nächstes Pokémon wird geladen...",
+  "close": "Schließen",
   "sidebar": {
     "settings": "Einstellungen",
     "generation": "Ziel-Generation",

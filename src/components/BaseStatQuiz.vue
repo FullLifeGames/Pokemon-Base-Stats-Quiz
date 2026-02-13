@@ -9,6 +9,7 @@ import { useQuizLogic } from "@/composables/useQuizLogic";
 import StatDisplay from "@/components/StatDisplay.vue";
 import PokemonSelector from "@/components/PokemonSelector.vue";
 import HintDisplay from "@/components/HintDisplay.vue";
+import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue';
 import type { QuizSettings } from "@/types/settings";
 
 const { t, locale } = useI18n();
@@ -161,8 +162,8 @@ function selectPokemon(selectedValue: string) {
 </script>
 
 <template>
-  <div class="w-full h-full min-h-screen flex flex-col p-4 md:p-6 lg:p-8">
-    <div class="flex flex-col gap-6 md:gap-8 flex-1">
+  <div class="w-full h-full min-h-screen flex flex-col p-3 md:p-4 lg:p-6">
+    <div class="flex flex-col gap-3 md:gap-4 flex-1">
       <!-- Header Section with Score -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -244,21 +245,29 @@ function selectPokemon(selectedValue: string) {
         />
 
         <!-- Result Message -->
-        <div v-if="isCorrect !== null && progressValue > 0" ref="resultMessageRef" class="text-center">
+        <div v-if="isCorrect !== null && progressValue > 0" ref="resultMessageRef">
           <div
             v-if="isCorrect"
-            class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-4 md:px-6 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg"
+            class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base flex items-center justify-center gap-3"
           >
-            <div>{{ t('correctMessage', { pokemon: selectedPokemon?.label || value }) }}</div>
-            <div v-if="selectedPokemon?.value !== currentPokemon.name" class="text-sm mt-2 opacity-90">
-              ({{ t('alsoCorrect') }}: {{ getLocalizedName(currentPokemon.name) }})
+            <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center flex-shrink-0">
+              <SpritesRenderer :generation="settings.generation" :name="currentPokemon.name" />
+            </div>
+            <div class="flex flex-col items-start gap-1">
+              <div>{{ t('correctMessage', { pokemon: selectedPokemon?.label || value }) }}</div>
+              <div v-if="selectedPokemon?.value !== currentPokemon.name" class="text-xs opacity-90">
+                ({{ t('alsoCorrect') }}: {{ getLocalizedName(currentPokemon.name) }})
+              </div>
             </div>
           </div>
           <div
             v-else
-            class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 px-4 md:px-6 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg"
+            class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base flex items-center justify-center gap-3"
           >
-            {{ t('incorrectMessage', { pokemon: getLocalizedName(currentPokemon.name) }) }}
+            <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center flex-shrink-0">
+              <SpritesRenderer :generation="settings.generation" :name="currentPokemon.name" />
+            </div>
+            <div>{{ t('incorrectMessage', { pokemon: getLocalizedName(currentPokemon.name) }) }}</div>
           </div>
         </div>
 

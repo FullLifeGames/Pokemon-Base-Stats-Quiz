@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Globe } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import type { QuizSettings } from '@/types/settings'
+import type { GenerationNum } from '@pkmn/dex'
 import GenerationSelect from './GenerationSelect.vue'
 import {
   Sidebar,
@@ -45,15 +46,15 @@ const changeLocale = (newLocale: string) => {
 }
 
 const updateGeneration = (newGeneration: number) => {
-  emit('update:settings', { ...props.settings, generation: newGeneration })
+  emit('update:settings', { ...props.settings, generation: newGeneration as GenerationNum })
 }
 
 const updateMinGeneration = (newMinGen: number) => {
-  emit('update:settings', { ...props.settings, minGeneration: newMinGen })
+  emit('update:settings', { ...props.settings, minGeneration: newMinGen as GenerationNum })
 }
 
 const updateMaxGeneration = (newMaxGen: number) => {
-  emit('update:settings', { ...props.settings, maxGeneration: newMaxGen })
+  emit('update:settings', { ...props.settings, maxGeneration: newMaxGen as GenerationNum })
 }
 
 const updateFullyEvolvedOnly = (value: boolean) => {

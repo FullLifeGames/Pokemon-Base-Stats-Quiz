@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import BaseStatQuiz from '@/components/BaseStatQuiz.vue'
 import { defaultSettings } from '@/types/settings'
+import type { GenerationNum } from '@pkmn/dex'
 
 // Mock Dex from @pkmn/dex
 vi.mock('@pkmn/dex', () => {
@@ -137,7 +138,7 @@ describe('BaseStatQuiz.vue', () => {
 
   it('updates settings and regenerates pokemon', async () => {
     const wrapper = mountComponent()
-    const newSettings = { ...defaultSettings, generation: 8 }
+    const newSettings = { ...defaultSettings, generation: 8 as GenerationNum }
     await wrapper.setProps({ settings: newSettings })
     expect(wrapper.props('settings').generation).toBe(8)
   })

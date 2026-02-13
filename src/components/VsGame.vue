@@ -9,8 +9,9 @@ import PlayerCard from './PlayerCard.vue'
 import StatDisplay from './StatDisplay.vue'
 import PokemonSelector from './PokemonSelector.vue'
 import HintDisplay from './HintDisplay.vue'
+import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue'
 import type { VsPlayer, VsRound } from '@/types/vsMode'
-import type { Species } from '@pkmn/dex'
+import type { Species, GenerationNum } from '@pkmn/dex'
 
 const { t, locale } = useI18n()
 
@@ -50,6 +51,8 @@ const {
   getPokemonStats,
   getLocalizedName,
 } = useQuizLogic(speciesOptions, locale)
+
+const generation = computed<GenerationNum>(() => speciesOptions.value.generation as GenerationNum)
 
 // Computed: current pokemon stats (from round)
 const currentStats = computed(() => {
@@ -265,6 +268,9 @@ function selectPokemon(selectedValue: string) {
             'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-800 dark:text-green-100': currentRound.winner !== 'none',
             'bg-muted border-border': currentRound.winner === 'none',
           }">
+            <div class="w-20 h-20 md:w-24 md:h-24 2xl:w-32 2xl:h-32 flex items-center justify-center">
+              <SpritesRenderer :generation="generation" :name="currentRound.pokemonId" />
+            </div>
             <p class="text-base md:text-lg lg:text-xl 2xl:text-2xl font-bold">
               <template v-if="currentRound.winner === 'none'">
                 {{ t('vs.roundTie') }}

@@ -33,6 +33,9 @@ export default defineConfig({
           if (id.includes('node_modules/@pkmn/dex')) {
             return '@pkmn/dex';
           }
+          if (id.includes('node_modules/@pkmn/img')) {
+            return '@pkmn/img';
+          }
         },
       },
     },
