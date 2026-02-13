@@ -251,7 +251,7 @@ function selectPokemon(selectedValue: string) {
             class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base flex items-center justify-center gap-3"
           >
             <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center flex-shrink-0">
-              <SpritesRenderer :generation="settings.generation" :name="currentPokemon.name" />
+              <SpritesRenderer class="max-w-full max-h-full" :generation="settings.generation" :name="currentPokemon.name" />
             </div>
             <div class="flex flex-col items-start gap-1">
               <div>{{ t('correctMessage', { pokemon: selectedPokemon?.label || value }) }}</div>
@@ -265,7 +265,7 @@ function selectPokemon(selectedValue: string) {
             class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base flex items-center justify-center gap-3"
           >
             <div class="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center flex-shrink-0">
-              <SpritesRenderer :generation="settings.generation" :name="currentPokemon.name" />
+              <SpritesRenderer class="max-w-full max-h-full" :generation="settings.generation" :name="currentPokemon.name" />
             </div>
             <div>{{ t('incorrectMessage', { pokemon: getLocalizedName(currentPokemon.name) }) }}</div>
           </div>

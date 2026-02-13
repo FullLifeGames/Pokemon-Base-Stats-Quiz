@@ -7,9 +7,14 @@
       :src="sprite.url"
       :width="sprite.w"
       :height="sprite.h"
-      :style="
-        pixelatedUsed && sprite.pixelated ? 'imageRendering: pixelated;' : ''
-      "
+      :style="{
+        maxWidth: '100%',
+        maxHeight: '100%',
+        width: 'auto',
+        height: 'auto',
+        objectFit: 'contain',
+        imageRendering: pixelatedUsed && sprite.pixelated ? 'pixelated' : 'auto'
+      }"
     />
   </div>
 </template>

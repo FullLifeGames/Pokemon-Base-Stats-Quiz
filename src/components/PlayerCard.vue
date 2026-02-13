@@ -31,10 +31,11 @@ const statusIcon = computed(() => {
       'border-primary bg-primary/5': isMe,
       'border-border bg-card': !isMe,
       'ring-2 ring-yellow-400 dark:ring-yellow-500': isWinner,
+      'pt-6 md:pt-4': isWinner,
     }"
   >
     <!-- Winner crown -->
-    <div v-if="isWinner" class="absolute -top-1.5 md:-top-2 left-1/2 -translate-x-1/2 text-lg md:text-xl 2xl:text-2xl">👑</div>
+    <div v-if="isWinner" class="absolute -top-1 md:-top-2 left-1/2 -translate-x-1/2 text-base md:text-xl 2xl:text-2xl">👑</div>
 
     <!-- Player name -->
     <div class="font-semibold text-xs md:text-sm lg:text-base 2xl:text-lg truncate max-w-full">

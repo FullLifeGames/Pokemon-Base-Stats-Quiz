@@ -24,6 +24,7 @@ const open = ref(false)
 const searchQuery = ref('')
 const isMobile = ref(window.innerWidth < 768)
 const popoverWrapperRef = ref<HTMLDivElement>()
+const displayCount = ref(30)
 
 // Update isMobile on window resize
 const updateIsMobile = () => {
@@ -48,17 +49,43 @@ watch(open, async (isOpen) => {
       document.documentElement.style.setProperty('--pokemon-selector-width', `${width}px`)
     }
   }
+  // Reset display count when closing
+  if (!isOpen) {
+    displayCount.value = 30
+  }
 })
 
 const filteredSpecies = computed(() => {
   if (!searchQuery.value) {
-    return props.speciesSelection.slice(0, 50)
+    return props.speciesSelection.slice(0, displayCount.value)
   }
   return props.speciesSelection
     .filter((pokemon) =>
       pokemon.label.toLowerCase().includes(searchQuery.value.toLowerCase())
     )
-    .slice(0, 100)
+    .slice(0, displayCount.value)
+})
+
+// Handle infinite scroll
+function handleScroll(event: Event) {
+  const target = event.target as HTMLElement
+  const scrollPosition = target.scrollTop + target.clientHeight
+  const scrollHeight = target.scrollHeight
+  
+  // Load more when within 200px of bottom
+  if (scrollHeight - scrollPosition < 200 && displayCount.value < props.speciesSelection.length) {
+    displayCount.value += 30
+  }
+}
+
+// Reset display count when search changes
+watch(searchQuery, () => {
+  displayCount.value = 30
+})
+
+// Reset display count when species selection changes
+watch(() => props.speciesSelection, () => {
+  displayCount.value = 30
 })
 
 const selectedPokemonLabel = computed(() =>
@@ -84,15 +111,20 @@ function selectPokemon(value: string) {
   <Sheet v-if="isMobile" v-model:open="open">
     <SheetTrigger as-child>
       <Button variant="outline" role="combobox" :aria-expanded="open" :disabled="disabled" class="justify-between w-full cursor-pointer h-9 sm:h-10">
-        <span class="text-xs sm:text-sm truncate">{{ selectedPokemonLabel || t('selectPokemon') }}</span>
-        <ChevronsUpDownIcon class="opacity-50 flex-shrink-0" />
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+          <div v-if="selectedValue" class="flex-shrink-0 flex items-center justify-center scale-[0.6] origin-left">
+            <IconRenderer :name="selectedValue" />
+          </div>
+          <span class="text-xs sm:text-sm truncate flex-1">{{ selectedPokemonLabel || t('selectPokemon') }}</span>
+        </div>
+        <ChevronsUpDownIcon class="opacity-50 flex-shrink-0 ml-2" />
       </Button>
     </SheetTrigger>
-    <SheetContent side="bottom" class="h-[80vh] flex flex-col">
+    <SheetContent side="bottom" class="h-[50vh] flex flex-col">
       <SheetHeader><SheetTitle>{{ t('selectPokemon') }}</SheetTitle></SheetHeader>
-      <Command class="flex-1 flex flex-col">
+      <Command class="flex-1 flex flex-col min-h-0">
         <CommandInput v-model="searchQuery" class="h-8 w-full text-xs sm:text-sm" :placeholder="t('searchPlaceholder')" />
-        <CommandList class="flex-1 overflow-y-auto">
+        <CommandList class="flex-1 overflow-y-auto max-h-full" @scroll="handleScroll">
           <CommandEmpty v-if="filteredSpecies.length === 0" class="text-xs sm:text-sm">{{ t('noResults') }}</CommandEmpty>
           <CommandGroup v-else>
             <CommandItem
@@ -102,7 +134,7 @@ function selectPokemon(value: string) {
               class="cursor-pointer text-xs sm:text-sm flex items-center gap-2"
               @select="(ev: any) => selectPokemon(ev.detail.value as string)"
             >
-              <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+              <div class="flex-shrink-0 flex items-center justify-center">
                 <IconRenderer :name="pokemon.value" />
               </div>
               <span class="flex-1 truncate">{{ pokemon.label }}</span>
@@ -119,14 +151,19 @@ function selectPokemon(value: string) {
     <Popover v-model:open="open">
       <PopoverTrigger as-child>
         <Button variant="outline" role="combobox" :aria-expanded="open" :disabled="disabled" class="justify-between w-full cursor-pointer h-10 lg:h-12 2xl:h-14">
-          <span class="text-sm lg:text-base 2xl:text-lg truncate">{{ selectedPokemonLabel || t('selectPokemon') }}</span>
+          <div class="flex items-center gap-2 min-w-0">
+            <div v-if="selectedValue" class="flex-shrink-0 flex items-center justify-center scale-75 origin-left">
+              <IconRenderer :name="selectedValue" />
+            </div>
+            <span class="text-sm lg:text-base 2xl:text-lg truncate">{{ selectedPokemonLabel || t('selectPokemon') }}</span>
+          </div>
           <ChevronsUpDownIcon class="opacity-50 flex-shrink-0" />
         </Button>
       </PopoverTrigger>
       <PopoverContent class="p-0 !w-[var(--pokemon-selector-width)]" side="top" align="center" :side-offset="8">
         <Command>
           <CommandInput v-model="searchQuery" class="h-9 lg:h-10 2xl:h-11 w-full text-sm lg:text-base 2xl:text-lg" :placeholder="t('searchPlaceholder')" />
-          <CommandList>
+          <CommandList @scroll="handleScroll">
             <CommandEmpty v-if="filteredSpecies.length === 0" class="text-sm lg:text-base 2xl:text-lg">{{ t('noResults') }}</CommandEmpty>
             <CommandGroup v-else>
               <CommandItem

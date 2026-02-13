@@ -269,7 +269,7 @@ function selectPokemon(selectedValue: string) {
             'bg-muted border-border': currentRound.winner === 'none',
           }">
             <div class="w-20 h-20 md:w-24 md:h-24 2xl:w-32 2xl:h-32 flex items-center justify-center">
-              <SpritesRenderer :generation="generation" :name="currentRound.pokemonId" />
+              <SpritesRenderer class="max-w-full max-h-full" :generation="generation" :name="currentRound.pokemonId" />
             </div>
             <p class="text-base md:text-lg lg:text-xl 2xl:text-2xl font-bold">
               <template v-if="currentRound.winner === 'none'">
