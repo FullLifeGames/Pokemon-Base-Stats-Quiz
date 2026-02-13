@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { LightbulbIcon, X } from "lucide-vue-next";
 import { computed, ref, watch, onMounted } from "vue";
-import { Dex } from "@pkmn/dex";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useI18n } from "vue-i18n";
-import { getLocalizedPokemonName } from "@/lib/pokemonNameHelper";
+import { useQuizLogic } from "@/composables/useQuizLogic";
 import StatDisplay from "@/components/StatDisplay.vue";
 import PokemonSelector from "@/components/PokemonSelector.vue";
 import HintDisplay from "@/components/HintDisplay.vue";
@@ -32,25 +31,21 @@ const resultMessageRef = ref<HTMLDivElement | null>(null);
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 let loadingInterval: number | undefined;
 
-const generationDex = computed(() => Dex.forGen(props.settings.generation));
-const species = computed(() => {
-  let allSpecies = generationDex.value.species.all().filter(s => s.num > 0 && s.forme !== "Gmax" && s.forme !== "Alola-Totem");
-  
-  // Filter by generation range (min and max)
-  allSpecies = allSpecies.filter(s => s.gen >= props.settings.minGeneration && s.gen <= props.settings.maxGeneration);
-  
-  // Filter by evolution stage
-  if (props.settings.fullyEvolvedOnly) {
-    allSpecies = allSpecies.filter(s => !s.evos || s.evos.length === 0);
-  }
-  
-  return allSpecies;
-});
+// Shared quiz logic (species filtering, stats, correctness checking)
+const speciesOptions = computed(() => ({
+  generation: props.settings.generation,
+  minGeneration: props.settings.minGeneration,
+  maxGeneration: props.settings.maxGeneration,
+  fullyEvolvedOnly: props.settings.fullyEvolvedOnly,
+}));
 
-const generateRandomPokemon = () => {
-  const randomIndex = Math.floor(Math.random() * species.value.length);
-  return species.value[randomIndex]!;
-};
+const {
+  speciesSelection,
+  generateRandomPokemon,
+  getPokemonStats,
+  isCorrectGuess,
+  getLocalizedName,
+} = useQuizLogic(speciesOptions, locale);
 
 const currentPokemon = ref(generateRandomPokemon());
 
@@ -105,23 +100,7 @@ watch(() => correctGuesses.value, (newVal) => {
 onMounted(() => {
   startTimer();
 });
-const currentStats = computed(() => {
-  return {
-    hp: currentPokemon.value.baseStats.hp,
-    attack: currentPokemon.value.baseStats.atk,
-    defense: currentPokemon.value.baseStats.def,
-    specialAttack: currentPokemon.value.baseStats.spa,
-    specialDefense: currentPokemon.value.baseStats.spd,
-    speed: currentPokemon.value.baseStats.spe,
-  };
-});
-
-const speciesSelection = computed(() =>
-  species.value.map((pokemon) => ({
-    label: getLocalizedPokemonName(pokemon.name, locale.value),
-    value: pokemon.name,
-  })),
-);
+const currentStats = computed(() => getPokemonStats(currentPokemon.value));
 
 const value = ref("");
 
@@ -131,18 +110,7 @@ const selectedPokemon = computed(() =>
 
 const isCorrect = computed(() => {
   if (!value.value) return null;
-  const selectedPok = species.value.find((p) => p.name === value.value);
-  if (!selectedPok) return false;
-  
-  // Check if stats match
-  return (
-    selectedPok.baseStats.hp === currentPokemon.value.baseStats.hp &&
-    selectedPok.baseStats.atk === currentPokemon.value.baseStats.atk &&
-    selectedPok.baseStats.def === currentPokemon.value.baseStats.def &&
-    selectedPok.baseStats.spa === currentPokemon.value.baseStats.spa &&
-    selectedPok.baseStats.spd === currentPokemon.value.baseStats.spd &&
-    selectedPok.baseStats.spe === currentPokemon.value.baseStats.spe
-  );
+  return isCorrectGuess(value.value, currentPokemon.value);
 });
 
 const nextPokemon = () => {
@@ -283,14 +251,14 @@ function selectPokemon(selectedValue: string) {
           >
             <div>{{ t('correctMessage', { pokemon: selectedPokemon?.label || value }) }}</div>
             <div v-if="selectedPokemon?.value !== currentPokemon.name" class="text-sm mt-2 opacity-90">
-              ({{ t('alsoCorrect') }}: {{ getLocalizedPokemonName(currentPokemon.name, locale) }})
+              ({{ t('alsoCorrect') }}: {{ getLocalizedName(currentPokemon.name) }})
             </div>
           </div>
           <div
             v-else
             class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 px-4 md:px-6 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg"
           >
-            {{ t('incorrectMessage', { pokemon: getLocalizedPokemonName(currentPokemon.name, locale) }) }}
+            {{ t('incorrectMessage', { pokemon: getLocalizedName(currentPokemon.name) }) }}
           </div>
         </div>
 

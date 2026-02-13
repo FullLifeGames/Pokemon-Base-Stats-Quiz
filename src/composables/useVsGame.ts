@@ -1,7 +1,7 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
-import { Dex } from '@pkmn/dex'
 import type { DataConnection } from 'peerjs'
 import { usePeerConnection } from './usePeerConnection'
+import { useQuizLogic } from './useQuizLogic'
 import type {
   VsGameState,
   VsPlayer,
@@ -111,19 +111,25 @@ export function useVsGame() {
   const isHost = computed(() => myRole.value === 'host')
   const isSpectator = computed(() => myRole.value === 'spectator')
 
-  const generationDex = computed(() => Dex.forGen(settings.value.generation))
-  const species = computed(() => {
-    let allSpecies = generationDex.value.species.all().filter(
-      s => s.num > 0 && s.forme !== 'Gmax' && s.forme !== 'Alola-Totem'
-    )
-    allSpecies = allSpecies.filter(
-      s => s.gen >= settings.value.minGeneration && s.gen <= settings.value.maxGeneration
-    )
-    if (settings.value.fullyEvolvedOnly) {
-      allSpecies = allSpecies.filter(s => !s.evos || s.evos.length === 0)
-    }
-    return allSpecies
-  })
+  // Shared quiz logic (species filtering, stats checking, random pokemon)
+  const speciesOptions = computed(() => ({
+    generation: settings.value.generation,
+    minGeneration: settings.value.minGeneration,
+    maxGeneration: settings.value.maxGeneration,
+    fullyEvolvedOnly: settings.value.fullyEvolvedOnly,
+  }))
+
+  // locale is not needed in useVsGame — VsGame.vue handles display.
+  // We pass a static ref so the composable works; selection lists are
+  // built in VsGame.vue with its own locale.
+  const quizLocale = ref('en')
+
+  const {
+    species,
+    generateRandomPokemon,
+    hasMatchingStats,
+    findSpecies,
+  } = useQuizLogic(speciesOptions, quizLocale)
 
   // --- Helpers ---
   function createPlayer(name: string, role: PlayerRole): VsPlayer {
@@ -137,12 +143,6 @@ export function useVsGame() {
       lastGuessTimestamp: null,
       connected: true,
     }
-  }
-
-  function generateRandomPokemon() {
-    const list = species.value
-    const idx = Math.floor(Math.random() * list.length)
-    return list[idx]!
   }
 
   function getFullRoomState(): VsGameRoom {
@@ -648,20 +648,14 @@ export function useVsGame() {
     if (!currentRound.value || gameState.value !== 'playing') return
     if (myRole.value === 'spectator') return
 
-    // Check correctness
-    const pokemon = species.value.find(s => s.name === pokemonId)
+    // Check correctness using shared quiz logic
+    const pokemon = findSpecies(pokemonId)
     if (!pokemon) return
 
-    const targetPokemon = species.value.find(s => s.name === currentRound.value!.pokemonId)
+    const targetPokemon = findSpecies(currentRound.value.pokemonId)
     if (!targetPokemon) return
 
-    const correct =
-      pokemon.baseStats.hp === targetPokemon.baseStats.hp &&
-      pokemon.baseStats.atk === targetPokemon.baseStats.atk &&
-      pokemon.baseStats.def === targetPokemon.baseStats.def &&
-      pokemon.baseStats.spa === targetPokemon.baseStats.spa &&
-      pokemon.baseStats.spd === targetPokemon.baseStats.spd &&
-      pokemon.baseStats.spe === targetPokemon.baseStats.spe
+    const correct = hasMatchingStats(pokemon, targetPokemon)
 
     if (isHosting.value) {
       host.value.hasAnswered = true

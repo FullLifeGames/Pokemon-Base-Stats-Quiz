@@ -4,7 +4,7 @@ import { Clock, LogOut, Swords, Zap, X } from 'lucide-vue-next'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { useI18n } from 'vue-i18n'
-import { getLocalizedPokemonName } from '@/lib/pokemonNameHelper'
+import { useQuizLogic } from '@/composables/useQuizLogic'
 import PlayerCard from './PlayerCard.vue'
 import StatDisplay from './StatDisplay.vue'
 import PokemonSelector from './PokemonSelector.vue'
@@ -36,23 +36,31 @@ const value = ref('')
 const hasAnswered = ref(false)
 const infoBannerDismissed = ref(false)
 
+// Shared quiz logic (stats extraction, localized names)
+// Species list comes from props (managed by useVsGame), so we just
+// need the helpers from the composable.
+const speciesOptions = computed(() => ({
+  generation: 9,
+  minGeneration: 1,
+  maxGeneration: 9,
+  fullyEvolvedOnly: false,
+}))
+
+const {
+  getPokemonStats,
+  getLocalizedName,
+} = useQuizLogic(speciesOptions, locale)
+
 // Computed: current pokemon stats (from round)
 const currentStats = computed(() => {
   const pokemon = props.species.find(s => s.name === props.currentRound.pokemonId)
   if (!pokemon) return null
-  return {
-    hp: pokemon.baseStats.hp,
-    attack: pokemon.baseStats.atk,
-    defense: pokemon.baseStats.def,
-    specialAttack: pokemon.baseStats.spa,
-    specialDefense: pokemon.baseStats.spd,
-    speed: pokemon.baseStats.spe,
-  }
+  return getPokemonStats(pokemon)
 })
 
 const speciesSelection = computed(() =>
   props.species.map((pokemon) => ({
-    label: getLocalizedPokemonName(pokemon.name, locale.value),
+    label: getLocalizedName(pokemon.name),
     value: pokemon.name,
   }))
 )
@@ -100,7 +108,7 @@ const roundWinnerName = computed(() => {
 
 // Answer display for spectators
 const correctPokemonName = computed(() => {
-  return getLocalizedPokemonName(props.currentRound.pokemonId, locale.value)
+  return getLocalizedName(props.currentRound.pokemonId)
 })
 
 // Reset selection on new round
