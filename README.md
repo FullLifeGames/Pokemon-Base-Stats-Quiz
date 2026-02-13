@@ -47,12 +47,17 @@ A fully-featured interactive quiz application that challenges users to identify 
 - **Responsive Design**: Works seamlessly on mobile, tablet, and desktop
 - **Modern Components**: Built with shadcn-vue for polished UI
 - **Congratulations Dialog**: Celebrates quiz completion with final stats
+- **Infinite Scrolling**: Pokémon selector loads more options as you scroll
+- **Visual Feedback**: Pokémon icons displayed in selector buttons and lists
+- **Smart Sprites**: Auto-scaling Pokémon sprites that maintain aspect ratio
+- **Mobile-Optimized**: Bottom sheet on mobile, popover on desktop with dynamic width matching
 
 ### Testing & Quality
-- **275+ Unit Tests**: Comprehensive test coverage with Vitest
+- **310+ Unit Tests**: Comprehensive test coverage with Vitest
 - **Type Safety**: Full TypeScript support throughout
 - **CI-Ready**: Tests can be integrated into GitHub Actions
 - **Component Testing**: Dedicated tests for all UI components including shared components
+- **Auto-Import Support**: Vitest configured for Vue Composition API auto-imports
 
 ## 🛠️ Tech Stack
 
@@ -63,6 +68,7 @@ A fully-featured interactive quiz application that challenges users to identify 
 
 ### Data & Localization
 - **@pkmn/dex** (v0.10.6) - Pokémon stats and species data
+- **@pkmn/img** (v0.10.6) - Pokémon sprites and icons
 - **PokéAPI v2** - German Pokémon localization
 - **vue-i18n** (v11.2.8) - Internationalization
 
@@ -87,20 +93,26 @@ A fully-featured interactive quiz application that challenges users to identify 
 ```
 src/
 ├── components/
-│   ├── __tests__/              # Unit tests (275+ tests)
+│   ├── __tests__/              # Unit tests (310+ tests)
 │   ├── BaseStatQuiz.vue        # Solo quiz mode component
 │   ├── VsMode.vue              # VS Mode coordinator
 │   ├── VsLobby.vue             # Multiplayer lobby
 │   ├── VsGame.vue              # Multiplayer game screen
 │   ├── VsResults.vue           # Match results screen
 │   ├── StatDisplay.vue         # Shared stat visualization
-│   ├── PokemonSelector.vue     # Shared Pokemon picker
+│   ├── PokemonSelector.vue     # Shared Pokemon picker with infinite scroll
 │   ├── HintDisplay.vue         # Shared hint display
 │   ├── AppSidebar.vue          # Settings sidebar
 │   ├── GenerationSelect.vue    # Reusable generation dropdown
+│   ├── PlayerCard.vue          # VS Mode player info card
+│   ├── renderer/               # Pokémon visual components
+│   │   ├── SpritesRenderer.vue # Pokémon sprite display
+│   │   └── IconRenderer.vue    # Pokémon icon display
 │   ├── ModeToggle.vue          # Dark/light mode toggle
 │   └── ui/                     # shadcn-vue components
 ├── composables/
+│   ├── __tests__/              # Composable tests
+│   ├── useQuizLogic.ts         # Shared quiz logic (randomization, stats, matching)
 │   ├── useVsGame.ts            # VS Mode game logic
 │   └── usePeerConnection.ts    # WebRTC connection management
 ├── types/
@@ -133,7 +145,7 @@ public/
 
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone https://github.com/FullLifeGames/Pokemon-Base-Stats-Quiz.git
 cd pokemon-quiz
 
 # Install dependencies
@@ -178,18 +190,22 @@ pnpm test:ui
 pnpm test:coverage
 ```
 
-**Test Coverage**: 275+ unit tests covering all components, composables, and logic
+**Test Coverage**: 310+ unit tests covering all components, composables, and logic
 - BaseStatQuiz: 7 tests
 - VsMode: 24 tests
 - VsGame: 26 tests
 - VsLobby: 25 tests
 - VsResults: 28 tests
+- useQuizLogic composable: 35 tests (shared quiz logic)
 - useVsGame composable: 29 tests
 - usePeerConnection composable: 14 tests
 - StatDisplay: 21 tests
 - PokemonSelector: 23 tests
 - HintDisplay: 24 tests
 - GenerationSelect: 7 tests
+- PlayerCard: 8 tests
+- SpritesRenderer: 2 tests
+- IconRenderer: 2 tests
 - ModeToggle: 2 tests
 - App: 4 tests
 - AppSidebar: 2 tests
@@ -294,6 +310,22 @@ The app uses @pkmn/dex for all Pokémon data. To update:
 ### Smart Selection System
 The quiz doesn't require exact Pokémon names. If a Pokémon has identical base stats to the displayed stats, it's considered correct. This allows for legitimate alternatives.
 
+### Advanced Randomization
+- **Recent History Tracking**: Prevents the same Pokémon from appearing within the last 10 rounds
+- **Stat-Based Grouping**: Pokémon with identical stats are grouped and weighted equally to ensure fair distribution
+- **Smart Deduplication**: Avoids repetitive selections while maintaining variety
+
+### Infinite Scroll Selection
+- **Performance Optimized**: Initially loads 30 Pokémon, loads 30 more as you scroll
+- **Search Integration**: Filters update instantly while maintaining scroll performance
+- **Mobile & Desktop**: Consistent experience across all devices with adaptive UI
+
+### Visual Feedback
+- **Pokémon Sprites**: Full-size sprites displayed in result messages and VS mode
+- **Pokémon Icons**: Compact icons in selector buttons and dropdown lists
+- **Auto-Scaling**: Sprites and icons automatically scale to fit their containers
+- **Responsive Sizing**: Adapts to screen size with Tailwind responsive classes
+
 ### German Localization
 German Pokémon names are fetched from PokéAPI and cached in `pokemonNames.json`. The localization handles special forms like "Deoxys-Attack" properly.
 
@@ -344,6 +376,10 @@ This project was developed as an **experiment with AI-assisted coding** using Gi
 - Real-time multiplayer with WebRTC/PeerJS
 - Peer-to-peer networking without backend servers
 - Component reusability and DRY principles
-- Comprehensive unit testing (275+ tests)
+- Comprehensive unit testing (310+ tests)
+- Performance optimization (infinite scrolling, lazy loading)
+- Advanced randomization algorithms with history tracking
+- Responsive design with mobile-first approach
+- Auto-import configuration for development efficiency
 
-The codebase serves as a reference for combining AI assistance with best practices in web development. All features were implemented iteratively with quality assurance and comprehensive testing. The VS Mode showcases advanced real-time multiplayer capabilities entirely in the browser without requiring a backend server.
+The codebase serves as a reference for combining AI assistance with best practices in web development. All features were implemented iteratively with quality assurance and comprehensive testing. The VS Mode showcases advanced real-time multiplayer capabilities entirely in the browser without requiring a backend server. Recent enhancements focus on UX improvements including visual feedback with Pokémon sprites/icons, infinite scrolling for better performance, and advanced randomization to prevent repetitive gameplay.

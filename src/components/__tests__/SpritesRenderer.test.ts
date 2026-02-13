@@ -1,6 +1,6 @@
 import { mount } from "@vue/test-utils";
 import { describe, expect, it } from "vitest";
-import SpritesRenderer from "./SpritesRenderer.vue";
+import SpritesRenderer from "@/components/renderer/SpritesRenderer.vue";
 
 describe("SpritesRenderer.vue", () => {
   it("renders the correct icon for a given name", () => {

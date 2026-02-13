@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import { config } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
+import { computed, ref, reactive, watch, watchEffect, onMounted, onUnmounted, nextTick } from 'vue'
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -16,6 +17,16 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 })
+
+// Mock Vue auto-imports
+globalThis.computed = computed
+globalThis.ref = ref
+globalThis.reactive = reactive
+globalThis.watch = watch
+globalThis.watchEffect = watchEffect
+globalThis.onMounted = onMounted
+globalThis.onUnmounted = onUnmounted
+globalThis.nextTick = nextTick
 
 // Mock vue-router globals (for auto-imported composables)
 globalThis.useRouter = vi.fn(() => ({
@@ -35,10 +46,6 @@ globalThis.useRoute = vi.fn(() => ({
   name: undefined,
   meta: {},
 }))
-
-// Mock watch and watchEffect (for auto-imported composables)
-globalThis.watch = vi.fn()
-globalThis.watchEffect = vi.fn()
 
 // Create i18n for tests
 const i18n = createI18n({

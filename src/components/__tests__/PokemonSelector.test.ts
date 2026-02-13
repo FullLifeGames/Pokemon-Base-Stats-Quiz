@@ -138,7 +138,7 @@ describe('PokemonSelector.vue', () => {
       })
       const vm = wrapper.vm as any
       
-      expect(vm.filteredSpecies).toHaveLength(50)
+      expect(vm.filteredSpecies).toHaveLength(30)
     })
 
     it('filters species by search query', async () => {
