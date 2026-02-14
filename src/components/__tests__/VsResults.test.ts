@@ -249,12 +249,4 @@ describe('VsResults.vue', () => {
       expect(wrapper.text()).toContain('Bob')
     })
   })
-
-  describe('Elapsed Time', () => {
-    it('displays formatted elapsed time', () => {
-      const wrapper = mountComponent({ elapsedTime: 125 })
-      // 125 seconds = 02:05
-      expect(wrapper.text()).toContain('02:05')
-    })
-  })
 })

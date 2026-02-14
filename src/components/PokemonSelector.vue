@@ -25,6 +25,46 @@ const searchQuery = ref('')
 const isMobile = ref(window.innerWidth < 768)
 const popoverWrapperRef = ref<HTMLDivElement>()
 const displayCount = ref(30)
+const dragStartY = ref(0)
+const dragCurrentY = ref(0)
+const isDragging = ref(false)
+
+// Touch event handlers for drag-to-dismiss
+function handleTouchStart(e: TouchEvent) {
+  const touch = e.touches[0]
+  if (!touch) return
+  dragStartY.value = touch.clientY
+  isDragging.value = true
+}
+
+function handleTouchMove(e: TouchEvent) {
+  if (!isDragging.value) return
+  const touch = e.touches[0]
+  if (!touch) return
+  dragCurrentY.value = touch.clientY
+  const deltaY = dragCurrentY.value - dragStartY.value
+  
+  // Only allow dragging down (positive deltaY)
+  if (deltaY > 0) {
+    // Prevent default only if dragging down to allow sheet to move
+    e.preventDefault()
+  }
+}
+
+function handleTouchEnd() {
+  if (!isDragging.value) return
+  
+  const deltaY = dragCurrentY.value - dragStartY.value
+  
+  // Close if dragged down more than 100px
+  if (deltaY > 100) {
+    open.value = false
+  }
+  
+  isDragging.value = false
+  dragStartY.value = 0
+  dragCurrentY.value = 0
+}
 
 // Update isMobile on window resize
 const updateIsMobile = () => {
@@ -121,7 +161,17 @@ function selectPokemon(value: string) {
       </Button>
     </SheetTrigger>
     <SheetContent side="bottom" class="h-[70vh] flex flex-col">
-      <SheetHeader><SheetTitle>{{ t('selectPokemon') }}</SheetTitle></SheetHeader>
+      <div 
+        class="flex-shrink-0 pb-2 -mx-6 px-6 pt-4 -mt-4 cursor-grab active:cursor-grabbing"
+        @touchstart="handleTouchStart"
+        @touchmove="handleTouchMove"
+        @touchend="handleTouchEnd"
+      >
+        <div class="w-12 h-1 rounded-full bg-muted-foreground/20 mx-auto mb-6"></div>
+        <SheetHeader>
+          <SheetTitle>{{ t('selectPokemon') }}</SheetTitle>
+        </SheetHeader>
+      </div>
       <Command class="flex-1 flex flex-col min-h-0">
         <CommandInput v-model="searchQuery" class="h-8 w-full text-xs sm:text-sm" :placeholder="t('searchPlaceholder')" />
         <CommandList class="flex-1 overflow-y-auto max-h-full" @scroll="handleScroll">
