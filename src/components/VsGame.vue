@@ -4,7 +4,7 @@ import { Clock, LogOut, Swords, Zap, X } from 'lucide-vue-next'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { useI18n } from 'vue-i18n'
-import { useQuizLogic } from '@/composables/useQuizLogic'
+import { useQuizLogic, type SpeciesFilterOptions } from '@/composables/useQuizLogic'
 import PlayerCard from './PlayerCard.vue'
 import StatDisplay from './StatDisplay.vue'
 import PokemonSelector from './PokemonSelector.vue'
@@ -40,11 +40,12 @@ const infoBannerDismissed = ref(false)
 // Shared quiz logic (stats extraction, localized names)
 // Species list comes from props (managed by useVsGame), so we just
 // need the helpers from the composable.
-const speciesOptions = computed(() => ({
+const speciesOptions = computed<SpeciesFilterOptions>(() => ({
   generation: 9,
   minGeneration: 1,
   maxGeneration: 9,
   fullyEvolvedOnly: false,
+  includeMegaPokemon: false,
 }))
 
 const {

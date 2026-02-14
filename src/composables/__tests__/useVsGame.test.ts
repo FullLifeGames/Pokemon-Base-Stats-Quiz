@@ -59,6 +59,7 @@ describe('useVsGame', () => {
         maxGeneration: 9,
         maxScore: 5,
         fullyEvolvedOnly: true,
+        includeMegaPokemon: false,
         hintsEnabled: true,
         timeLimit: 40,
       })
@@ -125,6 +126,11 @@ describe('useVsGame', () => {
     it('should update fullyEvolvedOnly setting', () => {
       game.updateSettings({ ...game.settings.value, fullyEvolvedOnly: true })
       expect(game.settings.value.fullyEvolvedOnly).toBe(true)
+    })
+
+    it('should update includeMegaPokemon setting', () => {
+      game.updateSettings({ ...game.settings.value, includeMegaPokemon: true })
+      expect(game.settings.value.includeMegaPokemon).toBe(true)
     })
 
     it('should update timeLimit setting', () => {

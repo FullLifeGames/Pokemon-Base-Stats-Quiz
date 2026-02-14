@@ -9,6 +9,7 @@ describe('AppSidebar.vue', () => {
     expect(defaultSettings.minGeneration).toBe(1)
     expect(defaultSettings.maxGeneration).toBe(9)
     expect(defaultSettings.fullyEvolvedOnly).toBe(true)
+    expect(defaultSettings.includeMegaPokemon).toBe(false)
     expect(defaultSettings.maxScore).toBe(10)
   })
 
@@ -19,6 +20,7 @@ describe('AppSidebar.vue', () => {
     expect(testSettings.minGeneration).toBeGreaterThanOrEqual(1)
     expect(testSettings.maxGeneration).toBeLessThanOrEqual(9)
     expect(typeof testSettings.fullyEvolvedOnly).toBe('boolean')
+    expect(typeof testSettings.includeMegaPokemon).toBe('boolean')
     expect(typeof testSettings.maxScore).toBe('number')
   })
 })

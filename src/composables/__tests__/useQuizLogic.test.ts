@@ -119,6 +119,7 @@ function setup(
     minGeneration: 1,
     maxGeneration: 9,
     fullyEvolvedOnly: false,
+    includeMegaPokemon: false,
     ...overrides,
   })
   const locale = ref(localeStr)

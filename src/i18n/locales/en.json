@@ -41,6 +41,7 @@
     "minGeneration": "Minimum Generation",
     "maxGeneration": "Maximum Generation",
     "fullyEvolvedOnly": "Fully Evolved Pokémon Only",
+    "includeMegaPokemon": "Include Mega Evolutions",
     "maxScore": "Win Score",
     "hintsEnabled": "Enable Hints",
     "madeBy": "Made by",

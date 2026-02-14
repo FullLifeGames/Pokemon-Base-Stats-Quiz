@@ -105,6 +105,7 @@ export const defaultVsRoomSettings: VsRoomSettings = {
   minGeneration: 1,
   maxGeneration: 9,
   fullyEvolvedOnly: true,
+  includeMegaPokemon: false,
   maxScore: 5,
   hintsEnabled: true,
   timeLimit: 40,

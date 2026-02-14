@@ -61,6 +61,10 @@ const updateFullyEvolvedOnly = (value: boolean) => {
   emit('update:settings', { ...props.settings, fullyEvolvedOnly: value })
 }
 
+const updateIncludeMegaPokemon = (value: boolean) => {
+  emit('update:settings', { ...props.settings, includeMegaPokemon: value })
+}
+
 const updateMaxScore = (newMaxScore: number) => {
   emit('update:settings', { ...props.settings, maxScore: newMaxScore })
 }
@@ -104,6 +108,20 @@ const updateHintsEnabled = (value: boolean) => {
                   />
                   <label for="fullyEvolvedCheckbox" class="text-sm font-medium cursor-pointer">
                     {{ t('sidebar.fullyEvolvedOnly') }}
+                  </label>
+                </div>
+                
+                <!-- Include Mega Pokémon Checkbox (Second) -->
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    :checked="settings.includeMegaPokemon" 
+                    @change="(e) => updateIncludeMegaPokemon((e.target as HTMLInputElement).checked)"
+                    class="w-4 h-4 rounded border border-input cursor-pointer"
+                    id="includeMegaPokemonCheckbox"
+                  />
+                  <label for="includeMegaPokemonCheckbox" class="text-sm font-medium cursor-pointer">
+                    {{ t('sidebar.includeMegaPokemon') }}
                   </label>
                 </div>
 

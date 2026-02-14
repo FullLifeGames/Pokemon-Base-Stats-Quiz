@@ -122,6 +122,20 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
                 {{ t('sidebar.fullyEvolvedOnly') }}
               </label>
             </div>
+            
+            <!-- Include Mega Pokémon -->
+            <div class="flex items-center gap-2">
+              <input
+                type="checkbox"
+                :checked="settings.includeMegaPokemon"
+                @change="(e) => updateSetting('includeMegaPokemon', (e.target as HTMLInputElement).checked)"
+                class="w-4 h-4 rounded border border-input cursor-pointer"
+                id="vsIncludeMegaPokemon"
+              />
+              <label for="vsIncludeMegaPokemon" class="text-sm cursor-pointer">
+                {{ t('sidebar.includeMegaPokemon') }}
+              </label>
+            </div>
 
             <!-- Max Score -->
             <div class="space-y-2">
@@ -296,6 +310,7 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
               <div>{{ t('sidebar.maxScore') }}: {{ settings.maxScore }}</div>
               <div>{{ t('vs.timeLimit') }}: {{ settings.timeLimit > 0 ? `${settings.timeLimit}s` : t('vs.noTimeLimit') }}</div>
               <div>{{ t('sidebar.fullyEvolvedOnly') }}: {{ settings.fullyEvolvedOnly ? '✓' : '✗' }}</div>
+              <div>{{ t('sidebar.includeMegaPokemon') }}: {{ settings.includeMegaPokemon ? '✓' : '✗' }}</div>
               <div>{{ t('sidebar.generation') }}: {{ settings.generation }}</div>
             </div>
           </div>

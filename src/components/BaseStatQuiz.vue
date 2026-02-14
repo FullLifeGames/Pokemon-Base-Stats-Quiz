@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useI18n } from "vue-i18n";
-import { useQuizLogic } from "@/composables/useQuizLogic";
+import { useQuizLogic, type SpeciesFilterOptions } from "@/composables/useQuizLogic";
 import StatDisplay from "@/components/StatDisplay.vue";
 import PokemonSelector from "@/components/PokemonSelector.vue";
 import HintDisplay from "@/components/HintDisplay.vue";
@@ -33,11 +33,12 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 let loadingInterval: number | undefined;
 
 // Shared quiz logic (species filtering, stats, correctness checking)
-const speciesOptions = computed(() => ({
+const speciesOptions = computed<SpeciesFilterOptions>(() => ({
   generation: props.settings.generation,
   minGeneration: props.settings.minGeneration,
   maxGeneration: props.settings.maxGeneration,
   fullyEvolvedOnly: props.settings.fullyEvolvedOnly,
+  includeMegaPokemon: props.settings.includeMegaPokemon,
 }));
 
 const {
@@ -83,7 +84,7 @@ const formatTime = (seconds: number): string => {
 };
 
 // Watch for settings changes and regenerate Pokemon
-watch(() => [props.settings.generation, props.settings.minGeneration, props.settings.maxGeneration, props.settings.fullyEvolvedOnly], () => {
+watch(() => [props.settings.generation, props.settings.minGeneration, props.settings.maxGeneration, props.settings.fullyEvolvedOnly, props.settings.includeMegaPokemon], () => {
   resetQuiz();
 });
 

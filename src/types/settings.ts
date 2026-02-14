@@ -1,13 +1,9 @@
-import type { GenerationNum } from '@pkmn/dex'
+import type { SpeciesFilterOptions } from '@/composables/useQuizLogic'
 
 /**
  * Quiz settings configuration
  */
-export interface QuizSettings {
-  generation: GenerationNum
-  minGeneration: GenerationNum
-  maxGeneration: GenerationNum
-  fullyEvolvedOnly: boolean
+export interface QuizSettings extends SpeciesFilterOptions {
   maxScore: number
   hintsEnabled: boolean
 }
@@ -20,6 +16,7 @@ export const defaultSettings: QuizSettings = {
   minGeneration: 1,
   maxGeneration: 9,
   fullyEvolvedOnly: true,
+  includeMegaPokemon: false,
   maxScore: 10,
   hintsEnabled: true,
 }

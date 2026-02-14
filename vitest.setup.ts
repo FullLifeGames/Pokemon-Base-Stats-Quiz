@@ -83,6 +83,7 @@ const i18n = createI18n({
         minGeneration: 'Min Generation',
         maxGeneration: 'Max Generation',
         fullyEvolvedOnly: 'Fully Evolved Only',
+        includeMegaPokemon: 'Include Mega Pokémon',
         maxScore: 'Win Score',
         madeBy: 'Made by',
         english: 'English',

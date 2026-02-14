@@ -1,5 +1,5 @@
 import { computed, ref, type Ref, type ComputedRef } from 'vue'
-import { Dex, type Species } from '@pkmn/dex'
+import { Dex, type Species, type GenerationNum } from '@pkmn/dex'
 import { getLocalizedPokemonName } from '@/lib/pokemonNameHelper'
 
 /**
@@ -7,10 +7,11 @@ import { getLocalizedPokemonName } from '@/lib/pokemonNameHelper'
  * QuizSettings (solo) and VsRoomSettings (multiplayer).
  */
 export interface SpeciesFilterOptions {
-  generation: number
-  minGeneration: number
-  maxGeneration: number
+  generation: GenerationNum
+  minGeneration: GenerationNum
+  maxGeneration: GenerationNum
   fullyEvolvedOnly: boolean
+  includeMegaPokemon: boolean
 }
 
 /**
@@ -73,6 +74,10 @@ export function useQuizLogic(
 
     if (options.value.fullyEvolvedOnly) {
       list = list.filter((s) => !s.evos || s.evos.length === 0)
+    }
+
+    if (!options.value.includeMegaPokemon) {
+      list = list.filter((s) => !s.forme || !s.forme.includes('Mega'))
     }
 
     return list

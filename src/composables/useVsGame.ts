@@ -1,7 +1,7 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
 import type { DataConnection } from 'peerjs'
 import { usePeerConnection } from './usePeerConnection'
-import { useQuizLogic } from './useQuizLogic'
+import { useQuizLogic, type SpeciesFilterOptions } from './useQuizLogic'
 import type {
   VsGameState,
   VsPlayer,
@@ -112,11 +112,12 @@ export function useVsGame() {
   const isSpectator = computed(() => myRole.value === 'spectator')
 
   // Shared quiz logic (species filtering, stats checking, random pokemon)
-  const speciesOptions = computed(() => ({
+  const speciesOptions = computed<SpeciesFilterOptions>(() => ({
     generation: settings.value.generation,
     minGeneration: settings.value.minGeneration,
     maxGeneration: settings.value.maxGeneration,
     fullyEvolvedOnly: settings.value.fullyEvolvedOnly,
+    includeMegaPokemon: settings.value.includeMegaPokemon,
   }))
 
   // locale is not needed in useVsGame — VsGame.vue handles display.
