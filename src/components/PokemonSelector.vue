@@ -120,7 +120,7 @@ function selectPokemon(value: string) {
         <ChevronsUpDownIcon class="opacity-50 flex-shrink-0 ml-2" />
       </Button>
     </SheetTrigger>
-    <SheetContent side="bottom" class="h-[50vh] flex flex-col">
+    <SheetContent side="bottom" class="h-[70vh] flex flex-col">
       <SheetHeader><SheetTitle>{{ t('selectPokemon') }}</SheetTitle></SheetHeader>
       <Command class="flex-1 flex flex-col min-h-0">
         <CommandInput v-model="searchQuery" class="h-8 w-full text-xs sm:text-sm" :placeholder="t('searchPlaceholder')" />

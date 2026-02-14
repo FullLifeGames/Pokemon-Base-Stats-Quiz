@@ -49,6 +49,7 @@
     "deutsch": "Deutsch"
   },
   "requestHint": "Hinweis anfordern",
+  "requestSecondHint": "Zweiten Hinweis anfordern",
   "hints": {
     "firstHint": "Typen",
     "secondHint": "Fähigkeiten"

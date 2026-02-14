@@ -226,7 +226,7 @@ function selectPokemon(selectedValue: string) {
           :disabled="progressValue > 0"
         >
           <LightbulbIcon class="mr-2 h-4 w-4" />
-          {{ t('requestHint') }}
+          {{ hintLevel === 0 ? t('requestHint') : t('requestSecondHint') }}
         </Button>
         
         <HintDisplay

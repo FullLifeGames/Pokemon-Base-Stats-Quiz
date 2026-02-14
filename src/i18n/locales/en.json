@@ -49,6 +49,7 @@
     "deutsch": "Deutsch"
   },
   "requestHint": "Request Hint",
+  "requestSecondHint": "Request Second Hint",
   "hints": {
     "firstHint": "Types",
     "secondHint": "Abilities"
