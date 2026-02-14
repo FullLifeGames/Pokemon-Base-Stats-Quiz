@@ -3,32 +3,51 @@ import type { QuizSettings } from './settings'
 /**
  * Roles in a VS game
  */
-export type PlayerRole = 'host' | 'guest' | 'spectator'
+export type PlayerRole = 'host' | 'player' | 'spectator'
 
 /**
  * VS game states
  */
 export type VsGameState =
   | 'idle'
+  | 'waiting-for-players'
   | 'lobby'
-  | 'waiting-for-opponent'
   | 'countdown'
   | 'playing'
   | 'round-result'
   | 'match-end'
 
 /**
+ * Game mode determines how the match ends
+ */
+export type GameMode = 'rounds' | 'target-score'
+
+/**
  * Player info
  */
 export interface VsPlayer {
+  id: string
   name: string
   role: PlayerRole
   score: number
+  roundScore: number
   hasAnswered: boolean
   lastGuess: string | null
   lastGuessCorrect: boolean | null
   lastGuessTimestamp: number | null
   connected: boolean
+}
+
+/**
+ * Per-player result for a round
+ */
+export interface PlayerRoundResult {
+  playerId: string
+  playerName: string
+  guess: string | null
+  correct: boolean
+  timestamp: number | null
+  score: number
 }
 
 /**
@@ -41,15 +60,17 @@ export interface VsRound {
   pokemonAbilities: string[]
   timeRemaining: number
   hintLevel: number
-  winner: PlayerRole | 'none' | null
-  wonBySpeed: boolean
+  results: PlayerRoundResult[]
 }
 
 /**
  * VS game room settings
  */
 export interface VsRoomSettings extends QuizSettings {
-  timeLimit: number // seconds per round, 0 = no limit
+  timeLimit: number       // seconds per round, minimum 10
+  gameMode: GameMode
+  totalRounds: number     // used when gameMode === 'rounds'
+  targetScore: number     // used when gameMode === 'target-score'
 }
 
 /**
@@ -59,8 +80,7 @@ export interface VsGameRoom {
   roomCode: string
   state: VsGameState
   settings: VsRoomSettings
-  host: VsPlayer
-  guest: VsPlayer | null
+  players: VsPlayer[]
   spectators: VsPlayer[]
   currentRound: VsRound | null
   roundNumber: number
@@ -70,22 +90,23 @@ export interface VsGameRoom {
  * Message types for peer communication
  */
 export type VsMessage =
-  | { type: 'player-info'; name: string; role: PlayerRole }
+  | { type: 'player-info'; id: string; name: string; role: PlayerRole }
   | { type: 'room-settings'; settings: VsRoomSettings }
   | { type: 'game-start' }
   | { type: 'new-round'; round: VsRound }
-  | { type: 'guess'; pokemonId: string; correct: boolean; timestamp: number }
-  | { type: 'opponent-answered' }
-  | { type: 'round-result'; winner: PlayerRole | 'none'; correctPokemon: string; hostGuess: string | null; guestGuess: string | null; hostCorrect: boolean | null; guestCorrect: boolean | null; wonBySpeed: boolean }
-  | { type: 'match-end'; winner: PlayerRole; hostScore: number; guestScore: number }
-  | { type: 'rematch-request' }
-  | { type: 'rematch-accept' }
+  | { type: 'guess'; playerId: string; pokemonId: string; correct: boolean; timestamp: number }
+  | { type: 'player-answered'; playerId: string }
+  | { type: 'round-result'; results: PlayerRoundResult[]; correctPokemon: string }
+  | { type: 'match-end'; players: VsPlayer[] }
+  | { type: 'restart-game' }
   | { type: 'timer-sync'; timeRemaining: number; hintLevel: number }
   | { type: 'spectator-state'; room: VsGameRoom }
   | { type: 'error'; message: string }
-  | { type: 'reconnect'; name: string; role: PlayerRole; peerId: string }
+  | { type: 'reconnect'; id: string; name: string; role: PlayerRole; peerId: string }
   | { type: 'full-state'; room: VsGameRoom }
-  | { type: 'forfeit'; role: PlayerRole }
+  | { type: 'forfeit'; playerId: string }
+  | { type: 'player-joined'; player: VsPlayer }
+  | { type: 'player-left'; playerId: string }
 
 /**
  * Session data stored for reconnection
@@ -93,6 +114,7 @@ export type VsMessage =
 export interface VsSession {
   roomCode: string
   playerName: string
+  playerId: string
   role: PlayerRole
   peerId: string
 }
@@ -108,7 +130,29 @@ export const defaultVsRoomSettings: VsRoomSettings = {
   includeMegaPokemon: false,
   maxScore: 5,
   hintsEnabled: true,
-  timeLimit: 40,
+  timeLimit: 30,
+  gameMode: 'rounds',
+  totalRounds: 10,
+  targetScore: 5000,
+}
+
+/**
+ * Calculate score for a correct answer based on remaining time.
+ * Returns 1000 for instant answers, scaling down to 100 at the deadline.
+ * Returns 0 for incorrect answers.
+ */
+export function calculateRoundScore(timeRemaining: number, timeLimit: number, isCorrect: boolean): number {
+  if (!isCorrect) return 0
+  if (timeLimit <= 0) return 500
+  const ratio = Math.max(0, Math.min(1, timeRemaining / timeLimit))
+  return Math.round(100 + 900 * ratio)
+}
+
+/**
+ * Generate a unique player ID
+ */
+export function generatePlayerId(): string {
+  return Math.random().toString(36).substring(2, 10)
 }
 
 /**
@@ -125,6 +169,14 @@ const namePokemon = [
   'Lucario', 'Gardevoir', 'Blaziken', 'Greninja', 'Dragapult', 'Mimikyu',
   'Umbreon', 'Sylveon', 'Tyranitar', 'Garchomp', 'Scizor', 'Togekiss',
   'Infernape', 'Decidueye', 'Cinderace', 'Toxtricity', 'Corviknight', 'Zoroark',
+  'Arcanine', 'Hydreigon', 'Salamence', 'Metagross', 'Scorbunny', 'Sobble',
+  'Cramorant', 'Haxorus', 'Venusaur', 'Blissey', 'Alakazam', 'Machamp',
+  'Ditto', 'Jolteon', 'Vaporeon', 'Flareon', 'Noivern', 'Rhyperior',
+  'Excadrill', 'Goodra', 'Rillaboom', 'Inteleon', 'Incineroar', 'Lycanroc',
+  'Primarina', 'Tapu Koko', 'Zacian', 'Zamazenta', 'Regieleki', 'Regidrago',
+  'Indeedee', 'Kommo-o', 'Hatterene', 'Talonflame', 'Bisharp', 'Golisopod',
+  'Porygon-Z', 'Corphish', 'Swampert', 'Ferrothorn', 'Mamoswine', 'Lucario-Mega',
+  'Gyarados', 'Kingdra', 'Milotic', 'Greninja-Ash'
 ]
 
 /**

@@ -24,32 +24,27 @@ const {
   gameState,
   roomCode,
   settings,
-  host,
-  guest,
+  players,
   spectators,
   currentRound,
   roundNumber,
   countdown,
-  rematchRequested,
-  rematchRequestedBy,
   matchWinner,
   myName,
+  myPlayerId,
   myRole,
   elapsedTime,
   isHost,
   isSpectator,
   isConnected,
   connectionError,
-  opponentAnswered,
-  opponentForfeited,
   species,
   createRoom,
   joinExistingRoom,
   rejoinRoom,
   startGame,
   submitGuess,
-  requestRematch,
-  acceptRematch,
+  restartGame,
   updateSettings,
   leaveGame,
   forfeitGame,
@@ -58,8 +53,6 @@ const {
 
 const showForfeitDialog = ref(false)
 
-const hostName = computed(() => host.value?.name || null)
-const guestName = computed(() => guest.value?.name ?? null)
 const spectatorCount = computed(() => spectators.value.length)
 
 // Update URL when room code changes
@@ -75,11 +68,8 @@ onMounted(async () => {
   const routeCode = route.params.roomCode as string | undefined
 
   if (session && (session.roomCode === routeCode || !routeCode)) {
-    // We have a saved session — attempt reconnection
     await rejoinRoom(session)
   } else if (routeCode && !session) {
-    // URL has a room code but no session — user clicked a shared link, go to join
-    // Pre-fill the join code (VsLobby will handle it)
     roomCode.value = routeCode.toUpperCase()
   }
 })
@@ -111,8 +101,12 @@ function handleUpdateName(name: string) {
   myName.value = name
 }
 
+function handleRestart() {
+  restartGame()
+}
+
 const showLobby = computed(() =>
-  ['idle', 'waiting-for-opponent', 'lobby'].includes(gameState.value)
+  ['idle', 'waiting-for-players', 'lobby'].includes(gameState.value)
 )
 
 const showCountdown = computed(() => gameState.value === 'countdown')
@@ -131,10 +125,10 @@ const showResults = computed(() => gameState.value === 'match-end')
     :room-code="roomCode"
     :settings="settings"
     :my-name="myName"
+    :my-player-id="myPlayerId"
     :is-host="isHost"
     :is-connected="isConnected"
-    :host-name="hostName"
-    :guest-name="guestName"
+    :players="players"
     :spectator-count="spectatorCount"
     :connection-error="connectionError"
     :game-state="gameState"
@@ -158,34 +152,30 @@ const showResults = computed(() => gameState.value === 'match-end')
 
   <!-- VS Game -->
   <VsGame
-    v-else-if="showGame && currentRound && guest"
-    :host="host"
-    :guest="guest"
+    v-else-if="showGame && currentRound"
+    :players="players"
+    :my-player-id="myPlayerId"
     :current-round="currentRound"
     :round-number="roundNumber"
     :my-role="myRole"
     :is-spectator="isSpectator"
     :game-state="gameState"
     :species="species"
-    :settings="{ maxScore: settings.maxScore, timeLimit: settings.timeLimit }"
-    :opponent-answered="opponentAnswered"
+    :settings="{ timeLimit: settings.timeLimit, gameMode: settings.gameMode, totalRounds: settings.totalRounds, targetScore: settings.targetScore }"
     @submit-guess="submitGuess"
     @quit="handleQuit"
   />
 
   <!-- Match Results -->
   <VsResults
-    v-else-if="showResults && guest && matchWinner"
-    :host="host"
-    :guest="guest"
-    :winner="matchWinner"
+    v-else-if="showResults && matchWinner"
+    :players="players"
+    :match-winner="matchWinner"
+    :my-player-id="myPlayerId"
     :my-role="myRole"
     :elapsed-time="elapsedTime"
-    :rematch-requested="rematchRequested"
-    :rematch-requested-by="rematchRequestedBy"
-    :opponent-forfeited="opponentForfeited"
-    @request-rematch="requestRematch"
-    @accept-rematch="acceptRematch"
+    :is-host="isHost"
+    @restart="handleRestart"
     @leave="handleLeave"
   />
 

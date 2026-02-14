@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Clock, LogOut, Swords, Zap, X } from 'lucide-vue-next'
-import { Progress } from '@/components/ui/progress'
+import { Clock, LogOut, Swords, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { useI18n } from 'vue-i18n'
 import { useQuizLogic, type SpeciesFilterOptions } from '@/composables/useQuizLogic'
@@ -10,22 +9,21 @@ import StatDisplay from './StatDisplay.vue'
 import PokemonSelector from './PokemonSelector.vue'
 import HintDisplay from './HintDisplay.vue'
 import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue'
-import type { VsPlayer, VsRound } from '@/types/vsMode'
+import type { VsPlayer, VsRound, GameMode, PlayerRoundResult } from '@/types/vsMode'
 import type { Species, GenerationNum } from '@pkmn/dex'
 
 const { t, locale } = useI18n()
 
 const props = defineProps<{
-  host: VsPlayer
-  guest: VsPlayer
+  players: VsPlayer[]
+  myPlayerId: string
   currentRound: VsRound
   roundNumber: number
-  myRole: 'host' | 'guest' | 'spectator'
+  myRole: 'host' | 'player' | 'spectator'
   isSpectator: boolean
   gameState: string
   species: Species[]
-  settings: { maxScore: number; timeLimit: number }
-  opponentAnswered: boolean
+  settings: { timeLimit: number; gameMode: GameMode; totalRounds: number; targetScore: number }
 }>()
 
 const emit = defineEmits<{
@@ -38,8 +36,6 @@ const hasAnswered = ref(false)
 const infoBannerDismissed = ref(false)
 
 // Shared quiz logic (stats extraction, localized names)
-// Species list comes from props (managed by useVsGame), so we just
-// need the helpers from the composable.
 const speciesOptions = computed<SpeciesFilterOptions>(() => ({
   generation: 9,
   minGeneration: 1,
@@ -55,7 +51,7 @@ const {
 
 const generation = computed<GenerationNum>(() => speciesOptions.value.generation as GenerationNum)
 
-// Computed: current pokemon stats (from round)
+// Current pokemon stats
 const currentStats = computed(() => {
   const pokemon = props.species.find(s => s.name === props.currentRound.pokemonId)
   if (!pokemon) return null
@@ -97,22 +93,37 @@ const timerWarning = computed(() => {
   return props.currentRound.timeRemaining <= Math.floor(props.settings.timeLimit / 2)
 })
 
-// Score progress
-const hostProgress = computed(() => (props.host.score / props.settings.maxScore) * 100)
-const guestProgress = computed(() => (props.guest.score / props.settings.maxScore) * 100)
+// How many have answered
+const answeredCount = computed(() => props.players.filter(p => p.hasAnswered).length)
 
-// Round winner display
+// Round result
 const isRoundResult = computed(() => props.gameState === 'round-result')
 
-const roundWinnerName = computed(() => {
-  if (!props.currentRound.winner || props.currentRound.winner === 'none') return null
-  if (props.currentRound.winner === 'host') return props.host.name
-  return props.guest.name
+// Sorted round results (highest score first)
+const sortedRoundResults = computed<PlayerRoundResult[]>(() => {
+  if (!props.currentRound.results || props.currentRound.results.length === 0) return []
+  return [...props.currentRound.results].sort((a, b) => b.score - a.score)
+})
+
+// Top scorer for this round (for crown display)
+const topRoundScorer = computed(() => {
+  if (sortedRoundResults.value.length === 0) return null
+  const top = sortedRoundResults.value[0]
+  if (!top || top.score === 0) return null
+  return top.playerId
 })
 
 // Answer display for spectators
 const correctPokemonName = computed(() => {
   return getLocalizedName(props.currentRound.pokemonId)
+})
+
+// Game progress display
+const progressLabel = computed(() => {
+  if (props.settings.gameMode === 'rounds') {
+    return t('vs.roundOf', { n: props.roundNumber, total: props.settings.totalRounds })
+  }
+  return t('vs.targetScoreLabel', { score: props.settings.targetScore })
 })
 
 // Reset selection on new round
@@ -123,10 +134,9 @@ watch(() => props.roundNumber, () => {
 
 function selectPokemon(selectedValue: string) {
   if (props.isSpectator) return
-  // Allow selection/changes until opponent has answered
-  if (hasAnswered.value && props.opponentAnswered) return
-  
-  value.value = selectedValue === value.value ? '' : selectedValue
+  if (hasAnswered.value) return // Can't change after submitting
+
+  value.value = selectedValue
   hasAnswered.value = true
   emit('submit-guess', value.value)
 }
@@ -145,7 +155,7 @@ function selectPokemon(selectedValue: string) {
             </h2>
           </div>
           <span class="hidden sm:inline text-xs md:text-sm 2xl:text-base text-muted-foreground bg-muted px-2 py-0.5 rounded-full whitespace-nowrap">
-            {{ t('vs.firstTo', { n: settings.maxScore }) }}
+            {{ progressLabel }}
           </span>
         </div>
         <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
@@ -180,32 +190,19 @@ function selectPokemon(selectedValue: string) {
       </div>
     </div>
 
-    <!-- Player Cards with VS divider -->
-    <div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 md:gap-3 lg:gap-4 2xl:gap-6 items-center">
-      <div class="flex flex-col gap-1.5 min-w-0">
-        <PlayerCard
-          :player="host"
-          :is-me="myRole === 'host'"
-          :show-result="isRoundResult"
-          :is-winner="isRoundResult && currentRound.winner === 'host'"
-        />
-        <Progress :model-value="hostProgress" class="h-1 md:h-1.5 2xl:h-2" />
-      </div>
-      <div class="flex flex-col items-center justify-center shrink-0">
-        <span class="text-[10px] md:text-xs 2xl:text-sm font-bold text-muted-foreground bg-muted px-1.5 md:px-2 py-0.5 md:py-1 rounded-md">VS</span>
-      </div>
-      <div class="flex flex-col gap-1.5 min-w-0">
-        <PlayerCard
-          :player="guest"
-          :is-me="myRole === 'guest'"
-          :show-result="isRoundResult"
-          :is-winner="isRoundResult && currentRound.winner === 'guest'"
-        />
-        <Progress :model-value="guestProgress" class="h-1 md:h-1.5 2xl:h-2" />
-      </div>
+    <!-- Player Cards — flexible row that wraps -->
+    <div class="flex flex-wrap gap-2 md:gap-3 justify-center">
+      <PlayerCard
+        v-for="player in players"
+        :key="player.id"
+        :player="player"
+        :is-me="player.id === myPlayerId"
+        :show-result="isRoundResult"
+        :is-winner="isRoundResult && topRoundScorer === player.id"
+      />
     </div>
 
-    <!-- Main content area — on large screens, 2-column: stats left, selector right -->
+    <!-- Main content area -->
     <div class="flex-1 flex flex-col lg:grid lg:grid-cols-[1fr_1fr] gap-3 md:gap-4 lg:gap-6 2xl:gap-8 min-h-0">
       <!-- Left column: stats + hints -->
       <div class="flex flex-col gap-3 md:gap-4">
@@ -214,11 +211,11 @@ function selectPokemon(selectedValue: string) {
           🔍 {{ t('vs.spectatorAnswer') }}: {{ correctPokemonName }}
         </div>
 
-        <!-- Info banner (hidden on mobile to save space, shown on md+) -->
+        <!-- Info banner -->
         <div v-if="!infoBannerDismissed" class="hidden md:flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 px-4 2xl:px-5 py-3 2xl:py-4 rounded-lg text-sm 2xl:text-base">
           <p>{{ t('vs.identifyStats') }}</p>
-          <button 
-            @click="infoBannerDismissed = true" 
+          <button
+            @click="infoBannerDismissed = true"
             class="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors cursor-pointer shrink-0"
             :title="t('close')"
           >
@@ -226,10 +223,8 @@ function selectPokemon(selectedValue: string) {
           </button>
         </div>
 
-        <!-- Stats Display Section -->
         <StatDisplay :stats="currentStats" :show-bst="true" />
 
-        <!-- Auto Hints -->
         <HintDisplay
           :hint-level="currentRound.hintLevel"
           :types="currentRound.pokemonTypes"
@@ -239,24 +234,21 @@ function selectPokemon(selectedValue: string) {
 
       <!-- Right column: selector + result -->
       <div class="flex flex-col gap-3 md:gap-4">
-        <!-- Selection (only for players, not spectators) -->
+        <!-- Selection (only for players, not spectators, not during results) -->
         <div v-if="!isSpectator && !isRoundResult" class="flex flex-col gap-2 md:gap-3">
           <!-- Current selection indicator -->
           <div v-if="hasAnswered" class="text-center py-1.5 md:py-2 bg-muted/50 rounded-lg">
             <p class="text-xs md:text-sm text-muted-foreground">
-              {{ t('vs.currentSelection') }}: <strong class="text-foreground">{{ selectedPokemon?.label || value }}</strong>
+              {{ t('vs.youAnswered', { pokemon: selectedPokemon?.label || value }) }}
             </p>
-            <p v-if="!opponentAnswered" class="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
-              {{ t('vs.canChangeAnswer') }}
-            </p>
-            <p v-else class="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
-              {{ t('vs.waitingForResults') }}
+            <p class="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
+              {{ t('vs.playersAnswered', { n: answeredCount, total: players.length }) }}
             </p>
           </div>
 
-          <!-- Pokemon selector - always show unless both have answered -->
+          <!-- Pokemon selector - show only if not yet answered -->
           <PokemonSelector
-            v-if="!(hasAnswered && opponentAnswered)"
+            v-if="!hasAnswered"
             :species-selection="speciesSelection"
             :selected-value="value"
             @select="selectPokemon"
@@ -265,28 +257,37 @@ function selectPokemon(selectedValue: string) {
 
         <!-- Round Result -->
         <div v-if="isRoundResult" class="flex items-center justify-center lg:flex-1">
-          <div class="rounded-xl px-5 md:px-6 2xl:px-8 py-4 md:py-5 2xl:py-6 inline-flex flex-col items-center gap-1.5 md:gap-2 2xl:gap-3 shadow-sm border w-full max-w-sm 2xl:max-w-md" :class="{
-            'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-800 dark:text-green-100': currentRound.winner !== 'none',
-            'bg-muted border-border': currentRound.winner === 'none',
-          }">
+          <div class="rounded-xl px-5 md:px-6 2xl:px-8 py-4 md:py-5 2xl:py-6 inline-flex flex-col items-center gap-2 md:gap-3 shadow-sm border w-full max-w-sm 2xl:max-w-md bg-card">
             <div class="w-20 h-20 md:w-24 md:h-24 2xl:w-32 2xl:h-32 flex items-center justify-center">
               <SpritesRenderer class="max-w-full max-h-full" :generation="generation" :name="currentRound.pokemonId" />
             </div>
-            <p class="text-base md:text-lg lg:text-xl 2xl:text-2xl font-bold">
-              <template v-if="currentRound.winner === 'none'">
-                {{ t('vs.roundTie') }}
-              </template>
-              <template v-else>
-                {{ t('vs.roundWinner', { name: roundWinnerName }) }}
-              </template>
-            </p>
-            <p v-if="currentRound.wonBySpeed && currentRound.winner !== 'none'" class="text-xs md:text-sm 2xl:text-base font-medium flex items-center gap-1">
-              <Zap class="w-3 h-3 md:w-3.5 md:h-3.5 2xl:w-4 2xl:h-4" />
-              {{ t('vs.wonBySpeed') }}
-            </p>
             <p class="text-xs md:text-sm 2xl:text-base opacity-80">
               {{ t('vs.correctAnswer') }}: <strong>{{ correctPokemonName }}</strong>
             </p>
+            <!-- Per-player round scores -->
+            <div class="w-full space-y-1">
+              <div
+                v-for="result in sortedRoundResults"
+                :key="result.playerId"
+                class="flex items-center justify-between text-sm px-2 py-1.5 rounded"
+                :class="{
+                  'bg-green-50 dark:bg-green-950': result.correct,
+                  'bg-red-50 dark:bg-red-950': !result.correct && result.guess,
+                  'bg-muted': !result.guess,
+                }"
+              >
+                <span class="font-medium truncate mr-2">{{ result.playerName }}</span>
+                <span
+                  class="font-bold shrink-0"
+                  :class="{
+                    'text-green-600 dark:text-green-400': result.score > 0,
+                    'text-muted-foreground': result.score === 0,
+                  }"
+                >
+                  +{{ result.score }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

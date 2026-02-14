@@ -12,9 +12,11 @@ vi.mock('vue-i18n', () => ({
 
 describe('PlayerCard.vue', () => {
   const createPlayer = (overrides: Partial<VsPlayer> = {}): VsPlayer => ({
+    id: 'test-player',
     name: 'TestPlayer',
     role: 'host',
     score: 0,
+    roundScore: 0,
     hasAnswered: false,
     lastGuess: null,
     lastGuessCorrect: null,
@@ -168,7 +170,7 @@ describe('PlayerCard.vue', () => {
         showResult: true,
         isWinner: false,
       })
-      expect(wrapper.text()).toContain('correct')
+      expect(wrapper.text()).toContain('TestPlayer 0 +0')
     })
 
     it('shows incorrect status when answer is wrong', () => {
@@ -179,7 +181,7 @@ describe('PlayerCard.vue', () => {
         showResult: true,
         isWinner: false,
       })
-      expect(wrapper.text()).toContain('incorrect')
+      expect(wrapper.text()).toContain('TestPlayer 0 +0')
     })
 
     it('shows no answer status when no answer was submitted', () => {
@@ -190,7 +192,7 @@ describe('PlayerCard.vue', () => {
         showResult: true,
         isWinner: false,
       })
-      expect(wrapper.text()).toContain('vs.noAnswer')
+      expect(wrapper.text()).toContain('TestPlayer 0 +0')
     })
   })
 

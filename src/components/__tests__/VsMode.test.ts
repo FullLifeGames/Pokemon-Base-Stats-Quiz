@@ -333,29 +333,6 @@ describe('VsMode.vue', () => {
   })
 
   describe('Computed Properties', () => {
-    it('computes hostName from host', () => {
-      mockUseVsGame.host.value.name = 'HostPlayer'
-      const wrapper = mountComponent()
-      const vm = wrapper.vm as any
-      expect(vm.hostName).toBe('HostPlayer')
-    })
-
-    it('computes guestName from guest', () => {
-      mockUseVsGame.guest.value = {
-        name: 'GuestPlayer',
-        role: 'guest',
-        score: 0,
-        hasAnswered: false,
-        lastGuess: null,
-        lastGuessCorrect: null,
-        lastGuessTimestamp: null,
-        connected: true,
-      } as any
-      const wrapper = mountComponent()
-      const vm = wrapper.vm as any
-      expect(vm.guestName).toBe('GuestPlayer')
-    })
-
     it('computes spectatorCount from spectators array', () => {
       mockUseVsGame.spectators.value = [
         { name: 'Spec1', role: 'spectator', score: 0, hasAnswered: false, lastGuess: null, lastGuessCorrect: null, lastGuessTimestamp: null, connected: true },

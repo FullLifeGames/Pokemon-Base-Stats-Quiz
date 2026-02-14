@@ -17,23 +17,33 @@ A fully-featured interactive quiz application that challenges users to identify 
 #### VS Mode (Multiplayer)
 - **Peer-to-Peer Multiplayer**: Real-time competitive gameplay via WebRTC (PeerJS)
 - **Room-Based Matchmaking**: Create or join rooms with 6-character codes
-- **Multiple Roles**: Play as Host, Guest, or Spectator
-- **Head-to-Head Competition**: Race to identify Pokémon faster than your opponent
-- **Speed Bonus**: Correct answers within 5 seconds earn bonus points
-- **Auto Hints**: Hints automatically revealed after 15 and 30 seconds
-- **Live Status Indicators**: See when your opponent has answered
-- **Round Results**: Detailed feedback showing both players' answers and timing
-- **Match Scoring**: First to reach the configured score wins
-- **Rematch System**: Request and accept rematches after a match ends
+- **N-Player Support**: Unlimited players can compete simultaneously (not just 1v1)
+- **Multiple Roles**: Play as Host, Player, or Spectator
+- **Time-Based Scoring**: Earn 100-1000 points per correct answer based on speed
+  - Instant answers: 1000 points
+  - Linear decay to 100 points at time limit
+  - Incorrect answers: 0 points
+- **Dual Game Modes**:
+  - **Rounds Mode**: Play a fixed number of rounds (default: 10)
+  - **Target Score Mode**: First to reach target score wins (default: 5000)
+- **Live Status Indicators**: See how many players have answered each round
+- **Per-Player Round Results**: Everyone gets points based on their speed and correctness
+- **Leaderboard**: Real-time score tracking sorted by total points
+- **Host-Only Restart**: Only the host can restart matches after completion
+- **Answer Locking**: First submission is final (prevents timing manipulation)
 - **Session Persistence**: Automatically reconnect if disconnected
-- **Spectator Mode**: Watch matches in real-time without participating
-- **Forfeit Option**: Gracefully exit matches with confirmation dialog
+- **Spectator Mode**: Watch matches in real-time without participating (unlimited)
+- **Forfeit Option**: Gracefully exit matches (game ends if less than 2 players remain)
 
 ### Customization & Settings
 - **Generation Filters**: Set minimum and maximum Pokémon generations (1-9)
 - **Evolution Stage Filter**: Option to show only fully evolved Pokémon
-- **Win Condition**: Configure custom win scores (default: 10 correct for solo, 5 for VS)
-- **Time Limits**: Set round time limits for VS Mode (optional)
+- **Win Condition**: Configure custom win scores (default: 10 correct for solo)
+- **VS Mode Settings** (Host only):
+  - **Game Mode**: Choose between Rounds or Target Score
+  - **Total Rounds**: Set number of rounds for Rounds mode (1-50, default: 10)
+  - **Target Score**: Set winning score for Target Score mode (1000-50000, default: 5000)
+  - **Time Limit**: Required per-round timer (10-300 seconds, default: 30)
 - **Hint Toggle**: Enable/disable hint system in solo mode
 - **Dynamic Configuration**: Adjust quiz parameters on-the-fly (host only in VS Mode)
 
@@ -53,7 +63,7 @@ A fully-featured interactive quiz application that challenges users to identify 
 - **Mobile-Optimized**: Bottom sheet on mobile, popover on desktop with dynamic width matching
 
 ### Testing & Quality
-- **310+ Unit Tests**: Comprehensive test coverage with Vitest
+- **300+ Unit Tests**: Comprehensive test coverage with Vitest
 - **Type Safety**: Full TypeScript support throughout
 - **CI-Ready**: Tests can be integrated into GitHub Actions
 - **Component Testing**: Dedicated tests for all UI components including shared components
@@ -190,20 +200,20 @@ pnpm test:ui
 pnpm test:coverage
 ```
 
-**Test Coverage**: 310+ unit tests covering all components, composables, and logic
+**Test Coverage**: 300+ unit tests covering all components, composables, and logic
 - BaseStatQuiz: 7 tests
-- VsMode: 24 tests
-- VsGame: 26 tests
-- VsLobby: 25 tests
-- VsResults: 28 tests
+- VsMode: 13 tests (updated for N-player)
+- VsGame: 20 tests (updated for N-player)
+- VsLobby: 18 tests (updated for N-player)
+- VsResults: 13 tests (updated for N-player)
 - useQuizLogic composable: 35 tests (shared quiz logic)
-- useVsGame composable: 29 tests
-- usePeerConnection composable: 14 tests
+- useVsGame composable: 17 tests (rewritten for N-player)
+- usePeerConnection composable: 11 tests (updated for 'player' role)
 - StatDisplay: 21 tests
 - PokemonSelector: 23 tests
 - HintDisplay: 24 tests
 - GenerationSelect: 7 tests
-- PlayerCard: 8 tests
+- PlayerCard: 9 tests (updated for N-player compact cards)
 - SpritesRenderer: 2 tests
 - IconRenderer: 2 tests
 - ModeToggle: 2 tests
@@ -242,40 +252,53 @@ For detailed testing information, see [TESTING.md](./TESTING.md)
 3. **Configure Settings** (Host only):
    - Set generation range
    - Toggle fully evolved Pokémon only
-   - Set max score (default: 5)
-   - Set time limit per round (optional)
-4. **Share Room Code** with your opponent
-5. **Wait for Opponent** or spectators to join
-6. **Click "Start Match"** when ready
+   - Choose game mode (Rounds or Target Score)
+   - Set total rounds (for Rounds mode, 1-50)
+   - Set target score (for Target Score mode, 1000-50000)
+   - Set time limit per round (10-300 seconds, required)
+4. **Share Room Code** with other players
+5. **Wait for Players** to join (minimum 2 players required)
+6. **Spectators** can join to watch (unlimited)
+7. **Click "Start Match"** when ready (requires 2+ players)
 
 #### Joining a Room
 1. **Select VS Mode** from the mode selection screen
 2. **Click "Join Room"** tab
 3. **Enter Room Code** (6 characters)
 4. **Choose Role**:
-   - **Join as Player**: Compete in the match (2 players max)
+   - **Join as Player**: Compete in the match (unlimited players)
    - **Join as Spectator**: Watch the match (unlimited spectators)
-5. **Wait for Host** to start the match
+5. **Wait for Host** to start the match (minimum 2 players required)
 
 #### Playing VS Mode
 1. **Countdown**: 3-2-1 countdown before each round
-2. **View Stats**: Both players see the same Pokémon stats
-3. **Race to Answer**: First correct answer wins the round
-4. **Speed Bonus**: Answer within 5 seconds for bonus point
-5. **Auto Hints**: 
-   - Types revealed after 15 seconds
-   - Abilities revealed after 30 seconds
-6. **Round Results**: See both players' answers and timing
-7. **Next Round**: Automatic advance after 3 seconds
-8. **Match End**: First to max score wins
-9. **Rematch**: Request rematch or return to lobby
+2. **View Stats**: All players see the same Pokémon stats simultaneously
+3. **Submit Answer**: Select and submit your guess (locked after first submission)
+4. **Time-Based Scoring**: 
+   - Correct answers: 1000 points (instant) → 100 points (at deadline)
+   - Incorrect answers: 0 points
+   - All players can score, not just first to answer
+5. **Round Results**: See all players' scores for that round
+   - Top scorer gets a crown indicator
+   - Individual round scores displayed (+X points)
+6. **Next Round**: Automatic advance after 3 seconds
+7. **Match End**: 
+   - **Rounds Mode**: After completing all rounds
+   - **Target Score Mode**: When any player reaches target score
+8. **Leaderboard**: Final standings sorted by total score
+9. **Play Again**: Host can restart the game (non-hosts wait)
 
 #### VS Mode Features
-- **Live Opponent Status**: See when opponent has answered
+- **N-Player Scaling**: UI adapts for 2-10+ players with compact player cards
+- **Live Player Status**: See how many players have answered each round
+- **Fair Timing**: All timestamps recorded by host to prevent clock manipulation
+- **Answer Locking**: Cannot change answer after submission (prevents gaming the system)
 - **Session Recovery**: Automatically reconnect if disconnected
-- **Forfeit**: Gracefully exit with confirmation (opponent wins)
+- **Forfeit**: Gracefully exit with confirmation (game ends if less than 2 players remain)
 - **Spectator View**: Watch matches without participating
-- **Real-time Sync**: All players see the same state
+- **Real-time Sync**: All players see the same state via host's clock
+- **Host Controls**: Only host can adjust settings and restart matches
+- **Dynamic Player List**: Join/leave during lobby, frozen during gameplay
 
 ## 🌍 Internationalization
 
@@ -340,9 +363,11 @@ Customize the difficulty by setting how many correct answers are needed to compl
 - Pokémon with identical base stats will both be accepted as correct (by design)
 - Generation 9 (Paldea) is the maximum supported generation
 - Some Pokémon forms may not have German names (falls back to English)
-- VS Mode requires both players to have stable internet connections
+- VS Mode requires all players to have stable internet connections
 - VS Mode uses a free PeerJS server which may have occasional downtime
 - Room codes expire when all players disconnect
+- VS Mode time limit is mandatory (minimum 10 seconds) to ensure fair scoring
+- Host disconnection ends the match (all state managed by host)
 
 ## 📦 Dependencies
 
@@ -376,10 +401,11 @@ This project was developed as an **experiment with AI-assisted coding** using Gi
 - Real-time multiplayer with WebRTC/PeerJS
 - Peer-to-peer networking without backend servers
 - Component reusability and DRY principles
-- Comprehensive unit testing (310+ tests)
+- Comprehensive unit testing (300+ tests)
 - Performance optimization (infinite scrolling, lazy loading)
 - Advanced randomization algorithms with history tracking
 - Responsive design with mobile-first approach
 - Auto-import configuration for development efficiency
+- Scalable N-player architecture with time-based scoring
 
-The codebase serves as a reference for combining AI assistance with best practices in web development. All features were implemented iteratively with quality assurance and comprehensive testing. The VS Mode showcases advanced real-time multiplayer capabilities entirely in the browser without requiring a backend server. Recent enhancements focus on UX improvements including visual feedback with Pokémon sprites/icons, infinite scrolling for better performance, and advanced randomization to prevent repetitive gameplay.
+The codebase serves as a reference for combining AI assistance with best practices in web development. All features were implemented iteratively with quality assurance and comprehensive testing. The VS Mode showcases advanced real-time multiplayer capabilities entirely in the browser without requiring a backend server, now supporting unlimited players with fair time-based scoring. Recent enhancements focus on UX improvements including visual feedback with Pokémon sprites/icons, infinite scrolling for better performance, advanced randomization to prevent repetitive gameplay, and a complete VS Mode overhaul for N-player support with dual game modes (rounds-based and target-score).

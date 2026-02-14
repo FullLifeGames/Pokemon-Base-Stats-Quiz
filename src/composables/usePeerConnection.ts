@@ -101,7 +101,7 @@ export function usePeerConnection(onMessage: (msg: VsMessage, conn: DataConnecti
 
   async function joinRoom(roomCode: string, asSpectator = false, existingPeerId?: string): Promise<void> {
     isHosting.value = false
-    myRole.value = asSpectator ? 'spectator' : 'guest'
+    myRole.value = asSpectator ? 'spectator' : 'player'
     
     // Use existing peerId if reconnecting, otherwise generate a new one
     const myId = existingPeerId || `${roomCode}-${Math.random().toString(36).substring(2, 8)}`

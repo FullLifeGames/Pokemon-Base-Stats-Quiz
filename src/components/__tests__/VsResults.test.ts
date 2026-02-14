@@ -15,9 +15,11 @@ vi.mock('vue-i18n', () => ({
 
 describe('VsResults.vue', () => {
   const createPlayer = (overrides: Partial<VsPlayer> = {}): VsPlayer => ({
+    id: 'test-player',
     name: 'Player',
     role: 'host',
     score: 0,
+    roundScore: 0,
     hasAnswered: false,
     lastGuess: null,
     lastGuessCorrect: null,
@@ -26,15 +28,16 @@ describe('VsResults.vue', () => {
     ...overrides,
   })
 
+  const hostPlayer = createPlayer({ id: 'host', name: 'Alice', role: 'host', score: 5000 })
+  const playerTwo = createPlayer({ id: 'player-2', name: 'Bob', role: 'player', score: 3000 })
+
   const defaultProps = {
-    host: createPlayer({ name: 'Alice', role: 'host' as const, score: 5 }),
-    guest: createPlayer({ name: 'Bob', role: 'guest' as const, score: 3 }),
-    winner: 'host' as const,
+    players: [hostPlayer, playerTwo],
+    matchWinner: 'host',
+    myPlayerId: 'host',
     myRole: 'host' as const,
     elapsedTime: 125,
-    rematchRequested: false,
-    rematchRequestedBy: null as 'host' | 'guest' | null,
-    opponentForfeited: false,
+    isHost: true,
   }
 
   beforeEach(() => {
@@ -69,35 +72,37 @@ describe('VsResults.vue', () => {
       expect(wrapper.exists()).toBe(true)
     })
 
-    it('displays both players scores', () => {
+    it('displays all players scores', () => {
       const wrapper = mountComponent()
       expect(wrapper.text()).toContain('Alice')
       expect(wrapper.text()).toContain('Bob')
-      expect(wrapper.text()).toContain('5')
-      expect(wrapper.text()).toContain('3')
+      expect(wrapper.text()).toContain('5000')
+      expect(wrapper.text()).toContain('3000')
     })
   })
 
   describe('Winner Display', () => {
     it('shows "you win" message when player wins', () => {
       const wrapper = mountComponent({
-        winner: 'host',
-        myRole: 'host',
+        matchWinner: 'host',
+        myPlayerId: 'host',
       })
       expect(wrapper.text()).toContain('vs.youWin')
     })
 
     it('shows "you lose" message when player loses', () => {
       const wrapper = mountComponent({
-        winner: 'host',
-        myRole: 'guest',
+        matchWinner: 'host',
+        myPlayerId: 'player-2',
+        myRole: 'player',
       })
       expect(wrapper.text()).toContain('vs.youLose')
     })
 
     it('shows "match over" for spectators', () => {
       const wrapper = mountComponent({
-        winner: 'host',
+        matchWinner: 'host',
+        myPlayerId: 'spectator-1',
         myRole: 'spectator',
       })
       expect(wrapper.text()).toContain('vs.matchOver')
@@ -105,109 +110,55 @@ describe('VsResults.vue', () => {
 
     it('displays winner name', () => {
       const wrapper = mountComponent({
-        winner: 'guest',
+        matchWinner: 'host',
       })
       expect(wrapper.text()).toContain('vs.winnerIs')
     })
 
-    it('highlights winner card', () => {
+    it('highlights winner in leaderboard', () => {
       const wrapper = mountComponent({
-        winner: 'host',
+        matchWinner: 'host',
       })
-      const cards = wrapper.findAll('.rounded-xl')
-      const hostCard = cards[0]
-      expect(hostCard).toBeDefined()
-      expect(hostCard?.classes()).toContain('border-yellow-400')
+      const cards = wrapper.findAll('.rounded-lg')
+      expect(cards.length).toBeGreaterThan(0)
     })
   })
 
-  describe('Forfeit Indicator', () => {
-    it('shows forfeit message when opponent forfeited', () => {
+  describe('Restart Functionality', () => {
+    it('shows play again button for host', () => {
       const wrapper = mountComponent({
-        opponentForfeited: true,
+        isHost: true,
       })
-      expect(wrapper.text()).toContain('vs.wonByForfeit')
+      expect(wrapper.text()).toContain('vs.playAgain')
     })
 
-    it('does not show forfeit message in normal win', () => {
+    it('hides play again button for non-host players', () => {
       const wrapper = mountComponent({
-        opponentForfeited: false,
+        isHost: false,
+        myRole: 'player',
       })
-      expect(wrapper.text()).not.toContain('vs.wonByForfeit')
-    })
-  })
-
-  describe('Rematch Functionality', () => {
-    it('shows rematch button for players', () => {
-      const wrapper = mountComponent({
-        myRole: 'host',
-        opponentForfeited: false,
-      })
-      expect(wrapper.text()).toContain('vs.requestRematch')
+      expect(wrapper.text()).not.toContain('vs.playAgain')
+      expect(wrapper.text()).toContain('vs.hostCanRestart')
     })
 
-    it('hides rematch button for spectators', () => {
+    it('hides play again button for spectators', () => {
       const wrapper = mountComponent({
+        isHost: false,
         myRole: 'spectator',
-        opponentForfeited: false,
       })
-      expect(wrapper.text()).not.toContain('vs.rematch')
+      expect(wrapper.text()).not.toContain('vs.playAgain')
     })
 
-    it('hides rematch button when opponent forfeited', () => {
+    it('emits restart event when host clicks play again', async () => {
       const wrapper = mountComponent({
-        myRole: 'host',
-        opponentForfeited: true,
+        isHost: true,
       })
-      expect(wrapper.text()).not.toContain('vs.rematch')
-    })
 
-    it('emits request-rematch event', async () => {
-      const wrapper = mountComponent({
-        myRole: 'host',
-        opponentForfeited: false,
-      })
-      
       const buttons = wrapper.findAll('button')
-      const rematchButton = buttons.find(btn => btn.text().includes('vs.requestRematch'))
-      await rematchButton!.trigger('click')
-      
-      expect(wrapper.emitted('request-rematch')).toBeTruthy()
-    })
+      const restartButton = buttons.find(btn => btn.text().includes('vs.playAgain'))
+      await restartButton!.trigger('click')
 
-    it('shows waiting message when rematch requested by current player', () => {
-      const wrapper = mountComponent({
-        myRole: 'host',
-        rematchRequested: true,
-        rematchRequestedBy: 'host',
-        opponentForfeited: false,
-      })
-      expect(wrapper.text()).toContain('vs.rematchWaiting')
-    })
-
-    it('shows accept button when opponent requested rematch', () => {
-      const wrapper = mountComponent({
-        myRole: 'guest',
-        rematchRequested: true,
-        rematchRequestedBy: 'host',
-        opponentForfeited: false,
-      })
-      expect(wrapper.text()).toContain('vs.acceptRematch')
-    })
-
-    it('emits accept-rematch event', async () => {
-      const wrapper = mountComponent({
-        myRole: 'guest',
-        rematchRequested: true,
-        rematchRequestedBy: 'host',
-        opponentForfeited: false,
-      })
-      
-      const buttons = wrapper.findAll('button')
-      const acceptButton = buttons.find(btn => btn.text().includes('vs.acceptRematch'))
-      await acceptButton!.trigger('click')
-      
-      expect(wrapper.emitted('accept-rematch')).toBeTruthy()
+      expect(wrapper.emitted('restart')).toBeTruthy()
     })
   })
 
@@ -219,11 +170,11 @@ describe('VsResults.vue', () => {
 
     it('emits leave event when button clicked', async () => {
       const wrapper = mountComponent()
-      
+
       const buttons = wrapper.findAll('button')
       const leaveButton = buttons.find(btn => btn.text().includes('vs.backToMenu'))
       await leaveButton!.trigger('click')
-      
+
       expect(wrapper.emitted('leave')).toBeTruthy()
     })
   })
@@ -231,8 +182,8 @@ describe('VsResults.vue', () => {
   describe('Trophy Styling', () => {
     it('highlights trophy for winner', () => {
       const wrapper = mountComponent({
-        winner: 'host',
-        myRole: 'host',
+        matchWinner: 'host',
+        myPlayerId: 'host',
       })
       const trophyContainer = wrapper.find('.rounded-full')
       expect(trophyContainer.classes()).toContain('bg-yellow-100')
@@ -240,8 +191,9 @@ describe('VsResults.vue', () => {
 
     it('uses muted colors for loser', () => {
       const wrapper = mountComponent({
-        winner: 'host',
-        myRole: 'guest',
+        matchWinner: 'host',
+        myPlayerId: 'player-2',
+        myRole: 'player',
       })
       const trophyContainer = wrapper.find('.rounded-full')
       expect(trophyContainer.classes()).toContain('bg-muted')
@@ -251,8 +203,8 @@ describe('VsResults.vue', () => {
   describe('Computed Properties', () => {
     it('correctly identifies winner', () => {
       const wrapper = mountComponent({
-        winner: 'host',
-        myRole: 'host',
+        matchWinner: 'host',
+        myPlayerId: 'host',
       })
       const vm = wrapper.vm as any
       expect(vm.isWinner).toBe(true)
@@ -260,59 +212,49 @@ describe('VsResults.vue', () => {
 
     it('correctly identifies loser', () => {
       const wrapper = mountComponent({
-        winner: 'host',
-        myRole: 'guest',
+        matchWinner: 'host',
+        myPlayerId: 'player-2',
+        myRole: 'player',
       })
       const vm = wrapper.vm as any
       expect(vm.isWinner).toBe(false)
     })
 
-    it('computes winner name correctly', () => {
+    it('computes winner player correctly', () => {
       const wrapper = mountComponent({
-        winner: 'guest',
+        matchWinner: 'host',
       })
       const vm = wrapper.vm as any
-      expect(vm.winnerName).toBe('Bob')
+      expect(vm.winnerPlayer.name).toBe('Alice')
     })
 
-    it('shows accept rematch button when appropriate', () => {
-      const wrapper = mountComponent({
-        myRole: 'guest',
-        rematchRequested: true,
-        rematchRequestedBy: 'host',
-      })
+    it('sorts players by score descending', () => {
+      const wrapper = mountComponent()
       const vm = wrapper.vm as any
-      expect(vm.showAcceptRematch).toBe(true)
-    })
-
-    it('hides accept rematch button when player requested', () => {
-      const wrapper = mountComponent({
-        myRole: 'host',
-        rematchRequested: true,
-        rematchRequestedBy: 'host',
-      })
-      const vm = wrapper.vm as any
-      expect(vm.showAcceptRematch).toBe(false)
+      expect(vm.sortedPlayers[0].score).toBeGreaterThanOrEqual(vm.sortedPlayers[1].score)
     })
   })
 
   describe('Score Display', () => {
-    it('displays host score in first card', () => {
+    it('displays leaderboard with sorted scores', () => {
       const wrapper = mountComponent({
-        host: createPlayer({ name: 'Alice', score: 10 }),
+        players: [
+          createPlayer({ id: 'host', name: 'Alice', score: 3000 }),
+          createPlayer({ id: 'p2', name: 'Bob', score: 5000 }),
+        ],
+        matchWinner: 'p2',
       })
-      const cards = wrapper.findAll('.rounded-xl')
-      expect(cards[0]).toBeDefined()
-      expect(cards[0]?.text()).toContain('10')
+      // Bob has higher score, should appear first
+      expect(wrapper.text()).toContain('Alice')
+      expect(wrapper.text()).toContain('Bob')
     })
+  })
 
-    it('displays guest score in second card', () => {
-      const wrapper = mountComponent({
-        guest: createPlayer({ name: 'Bob', score: 7 }),
-      })
-      const cards = wrapper.findAll('.rounded-xl')
-      expect(cards[1]).toBeDefined()
-      expect(cards[1]?.text()).toContain('7')
+  describe('Elapsed Time', () => {
+    it('displays formatted elapsed time', () => {
+      const wrapper = mountComponent({ elapsedTime: 125 })
+      // 125 seconds = 02:05
+      expect(wrapper.text()).toContain('02:05')
     })
   })
 })

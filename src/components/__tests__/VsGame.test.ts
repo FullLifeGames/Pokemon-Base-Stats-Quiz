@@ -39,9 +39,11 @@ describe('VsGame.vue', () => {
   ]
 
   const createPlayer = (overrides: Partial<VsPlayer> = {}): VsPlayer => ({
+    id: 'test-player',
     name: 'Player',
     role: 'host',
     score: 0,
+    roundScore: 0,
     hasAnswered: false,
     lastGuess: null,
     lastGuessCorrect: null,
@@ -57,22 +59,23 @@ describe('VsGame.vue', () => {
     pokemonAbilities: ['static'],
     timeRemaining: 60,
     hintLevel: 0,
-    winner: null,
-    wonBySpeed: false,
+    results: [],
     ...overrides,
   })
 
+  const hostPlayer = createPlayer({ id: 'host', name: 'Host', role: 'host' })
+  const playerTwo = createPlayer({ id: 'player-2', name: 'Player2', role: 'player' })
+
   const defaultProps = {
-    host: createPlayer({ name: 'Host', role: 'host' as const }),
-    guest: createPlayer({ name: 'Guest', role: 'guest' as const }),
+    players: [hostPlayer, playerTwo],
+    myPlayerId: 'host',
     currentRound: createRound(),
     roundNumber: 1,
     myRole: 'host' as const,
     isSpectator: false,
     gameState: 'playing',
     species: mockSpecies,
-    settings: { maxScore: 5, timeLimit: 40 },
-    opponentAnswered: false,
+    settings: { timeLimit: 40, gameMode: 'rounds' as const, totalRounds: 10, targetScore: 5000 },
   }
 
   beforeEach(() => {
@@ -161,6 +164,10 @@ describe('VsGame.vue', () => {
             template: '<div class="hint-display"></div>',
             props: ['hintLevel', 'types', 'abilities'],
           },
+          SpritesRenderer: {
+            template: '<div class="sprites-renderer"></div>',
+            props: ['generation', 'name'],
+          },
         },
       },
     })
@@ -172,9 +179,8 @@ describe('VsGame.vue', () => {
       expect(wrapper.exists()).toBe(true)
     })
 
-    it('displays both player cards', () => {
+    it('displays player cards', () => {
       const wrapper = mountComponent()
-      // PlayerCard is stubbed, just verify component renders
       expect(wrapper.exists()).toBe(true)
     })
 
@@ -194,7 +200,7 @@ describe('VsGame.vue', () => {
   describe('Timer Display', () => {
     it('shows timer when time limit is set', () => {
       const wrapper = mountComponent({
-        settings: { maxScore: 5, timeLimit: 40 },
+        settings: { timeLimit: 40, gameMode: 'rounds', totalRounds: 10, targetScore: 5000 },
         currentRound: createRound({ timeRemaining: 45 }),
       })
       const vm = wrapper.vm as any
@@ -203,7 +209,7 @@ describe('VsGame.vue', () => {
 
     it('does not show timer when time limit is 0', () => {
       const wrapper = mountComponent({
-        settings: { maxScore: 5, timeLimit: 0 },
+        settings: { timeLimit: 0, gameMode: 'rounds', totalRounds: 10, targetScore: 5000 },
       })
       const vm = wrapper.vm as any
       expect(vm.timerDisplay).toBeNull()
@@ -217,18 +223,18 @@ describe('VsGame.vue', () => {
       expect(vm.timerDisplay).toBe('02:05')
     })
 
-    it('marks timer as urgent when below 20% remaining', () => {
+    it('marks timer as urgent when below 25% remaining', () => {
       const wrapper = mountComponent({
-        settings: { maxScore: 5, timeLimit: 40 },
+        settings: { timeLimit: 40, gameMode: 'rounds', totalRounds: 10, targetScore: 5000 },
         currentRound: createRound({ timeRemaining: 10 }),
       })
       const vm = wrapper.vm as any
       expect(vm.timerUrgent).toBe(true)
     })
 
-    it('marks timer as warning when below 40% remaining', () => {
+    it('marks timer as warning when below 50% remaining', () => {
       const wrapper = mountComponent({
-        settings: { maxScore: 5, timeLimit: 40 },
+        settings: { timeLimit: 40, gameMode: 'rounds', totalRounds: 10, targetScore: 5000 },
         currentRound: createRound({ timeRemaining: 20 }),
       })
       const vm = wrapper.vm as any
@@ -277,11 +283,10 @@ describe('VsGame.vue', () => {
     it('emits submit-guess when pokemon is selected', async () => {
       const wrapper = mountComponent()
       const vm = wrapper.vm as any
-      
+
       vm.value = 'pikachu'
-      // Simulate submit action
       wrapper.vm.$emit('submit-guess', 'pikachu')
-      
+
       expect(wrapper.emitted('submit-guess')).toBeTruthy()
       expect(wrapper.emitted('submit-guess')![0]).toEqual(['pikachu'])
     })
@@ -289,23 +294,22 @@ describe('VsGame.vue', () => {
     it('tracks if player has answered', async () => {
       const wrapper = mountComponent()
       const vm = wrapper.vm as any
-      
+
       expect(vm.hasAnswered).toBe(false)
-      
+
       vm.hasAnswered = true
       await wrapper.vm.$nextTick()
-      
+
       expect(vm.hasAnswered).toBe(true)
     })
 
     it('prevents multiple answers per round', () => {
       const wrapper = mountComponent()
       const vm = wrapper.vm as any
-      
+
       vm.hasAnswered = true
       vm.value = 'pikachu'
-      
-      // Should not emit if already answered
+
       expect(vm.hasAnswered).toBe(true)
     })
   })
@@ -313,7 +317,6 @@ describe('VsGame.vue', () => {
   describe('Game States', () => {
     it('shows countdown state', () => {
       const wrapper = mountComponent({ gameState: 'countdown' })
-      // Countdown state should be handled differently
       expect(wrapper.exists()).toBe(true)
     })
 
@@ -322,65 +325,65 @@ describe('VsGame.vue', () => {
       expect(wrapper.exists()).toBe(true)
     })
 
-    it('shows round end state', () => {
-      const wrapper = mountComponent({ gameState: 'roundEnd' })
+    it('shows round result state', () => {
+      const wrapper = mountComponent({ gameState: 'round-result' })
       expect(wrapper.exists()).toBe(true)
     })
   })
 
   describe('Player Cards', () => {
     it('marks current player card with isMe', () => {
-      const wrapper = mountComponent({ myRole: 'host' })
-      // With stubbed components, just verify it renders
+      const wrapper = mountComponent({ myPlayerId: 'host' })
       expect(wrapper.exists()).toBe(true)
     })
 
-    it('marks current player card for guest', () => {
-      const wrapper = mountComponent({ myRole: 'guest' })
-      // With stubbed components, just verify it renders
+    it('marks current player card for non-host', () => {
+      const wrapper = mountComponent({ myPlayerId: 'player-2', myRole: 'player' })
       expect(wrapper.exists()).toBe(true)
     })
 
-    it('shows results when in roundEnd state', () => {
-      const wrapper = mountComponent({ gameState: 'roundEnd' })
-      // Check for result display in the UI
+    it('shows results when in round-result state', () => {
+      const wrapper = mountComponent({ gameState: 'round-result' })
       expect(wrapper.html()).toBeTruthy()
     })
 
     it('does not show results during playing state', () => {
       const wrapper = mountComponent({ gameState: 'playing' })
-      // Check that game is in playing state
       expect(wrapper.exists()).toBe(true)
     })
   })
 
   describe('Spectator View', () => {
     it('disables input for spectators', () => {
-      const wrapper = mountComponent({ 
+      const wrapper = mountComponent({
         myRole: 'spectator' as const,
-        isSpectator: true 
+        isSpectator: true,
       })
-      
-      // Spectators should not be able to submit answers
+
       expect(wrapper.props('isSpectator')).toBe(true)
     })
   })
 
-  describe('Opponent Status', () => {
-    it('shows opponent answered indicator', () => {
-      const wrapper = mountComponent({ opponentAnswered: true })
-      expect(wrapper.props('opponentAnswered')).toBe(true)
+  describe('Answered Count', () => {
+    it('tracks how many players have answered', () => {
+      const wrapper = mountComponent({
+        players: [
+          createPlayer({ id: 'host', name: 'Host', role: 'host', hasAnswered: true }),
+          createPlayer({ id: 'p2', name: 'P2', role: 'player', hasAnswered: false }),
+        ],
+      })
+      const vm = wrapper.vm as any
+      expect(vm.answeredCount).toBe(1)
     })
   })
 
   describe('Quit Functionality', () => {
     it('emits quit event', async () => {
       const wrapper = mountComponent()
-      
+
       await wrapper.vm.$emit('quit')
-      
+
       expect(wrapper.emitted('quit')).toBeTruthy()
     })
   })
-
 })

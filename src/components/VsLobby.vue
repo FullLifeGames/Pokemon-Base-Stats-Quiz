@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import GenerationSelect from './GenerationSelect.vue'
 import { Copy, Users, Eye, ArrowLeft, Loader2 } from 'lucide-vue-next'
-import type { VsRoomSettings } from '@/types/vsMode'
+import type { VsRoomSettings, VsPlayer, GameMode } from '@/types/vsMode'
 import type { GenerationNum } from '@pkmn/dex'
 
 const { t } = useI18n()
@@ -15,10 +15,10 @@ const props = defineProps<{
   roomCode: string
   settings: VsRoomSettings
   myName: string
+  myPlayerId: string
   isHost: boolean
   isConnected: boolean
-  hostName: string | null
-  guestName: string | null
+  players: VsPlayer[]
   spectatorCount: number
   connectionError: string | null
   gameState: string
@@ -49,7 +49,6 @@ const copyRoomCode = async () => {
 }
 
 const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSettings[K] | number) => {
-  // Only allow settings updates before room is created (during idle state)
   if (props.gameState === 'idle') {
     if (key === 'generation' || key === 'minGeneration' || key === 'maxGeneration') {
       emit('update-settings', { ...props.settings, [key]: value as GenerationNum })
@@ -57,6 +56,10 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
       emit('update-settings', { ...props.settings, [key]: value })
     }
   }
+}
+
+const setGameMode = (mode: GameMode) => {
+  emit('update-settings', { ...props.settings, gameMode: mode })
 }
 </script>
 
@@ -108,7 +111,66 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
           <!-- Settings -->
           <div class="space-y-4">
             <h3 class="text-sm font-semibold">{{ t('sidebar.settings') }}</h3>
-            
+
+            <!-- Game Mode -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium">{{ t('vs.gameMode') }}</label>
+              <div class="flex rounded-lg border overflow-hidden">
+                <button
+                  class="flex-1 px-3 py-2 text-sm font-medium transition-colors cursor-pointer"
+                  :class="settings.gameMode === 'rounds' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
+                  @click="setGameMode('rounds')"
+                >
+                  {{ t('vs.roundsBased') }}
+                </button>
+                <button
+                  class="flex-1 px-3 py-2 text-sm font-medium transition-colors cursor-pointer"
+                  :class="settings.gameMode === 'target-score' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
+                  @click="setGameMode('target-score')"
+                >
+                  {{ t('vs.targetScoreBased') }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Total Rounds (when rounds mode) -->
+            <div v-if="settings.gameMode === 'rounds'" class="space-y-2">
+              <label class="text-sm font-medium">{{ t('vs.totalRounds') }}</label>
+              <Input
+                type="number"
+                :model-value="settings.totalRounds"
+                @update:model-value="(val) => updateSetting('totalRounds', Math.max(1, typeof val === 'number' ? val : parseInt(String(val)) || 10))"
+                min="1"
+                max="50"
+              />
+            </div>
+
+            <!-- Target Score (when target-score mode) -->
+            <div v-if="settings.gameMode === 'target-score'" class="space-y-2">
+              <label class="text-sm font-medium">{{ t('vs.targetScore') }}</label>
+              <Input
+                type="number"
+                :model-value="settings.targetScore"
+                @update:model-value="(val) => updateSetting('targetScore', Math.max(1000, typeof val === 'number' ? val : parseInt(String(val)) || 5000))"
+                min="1000"
+                max="50000"
+                step="1000"
+              />
+            </div>
+
+            <!-- Time Limit -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium">{{ t('vs.timeLimit') }}</label>
+              <Input
+                type="number"
+                :model-value="settings.timeLimit"
+                @update:model-value="(val) => updateSetting('timeLimit', Math.max(10, typeof val === 'number' ? val : parseInt(String(val)) || 30))"
+                min="10"
+                max="300"
+              />
+              <p class="text-xs text-muted-foreground">{{ t('vs.timeLimitDesc') }}</p>
+            </div>
+
             <!-- Fully Evolved Only -->
             <div class="flex items-center gap-2">
               <input
@@ -135,31 +197,6 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
               <label for="vsIncludeMegaPokemon" class="text-sm cursor-pointer">
                 {{ t('sidebar.includeMegaPokemon') }}
               </label>
-            </div>
-
-            <!-- Max Score -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium">{{ t('sidebar.maxScore') }}</label>
-              <Input
-                type="number"
-                :model-value="settings.maxScore"
-                @update:model-value="(val) => updateSetting('maxScore', Math.max(1, typeof val === 'number' ? val : parseInt(String(val)) || 10))"
-                min="1"
-                max="999"
-              />
-            </div>
-
-            <!-- Time Limit -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium">{{ t('vs.timeLimit') }}</label>
-              <Input
-                type="number"
-                :model-value="settings.timeLimit"
-                @update:model-value="(val) => updateSetting('timeLimit', Math.max(0, typeof val === 'number' ? val : parseInt(String(val)) || 0))"
-                min="0"
-                max="300"
-              />
-              <p class="text-xs text-muted-foreground">{{ t('vs.timeLimitDesc') }}</p>
             </div>
 
             <!-- Min Generation -->
@@ -241,8 +278,8 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
         </div>
       </template>
 
-      <!-- Waiting for opponent (host created room) -->
-      <template v-else-if="gameState === 'waiting-for-opponent'">
+      <!-- Waiting for players (host created room) -->
+      <template v-else-if="gameState === 'waiting-for-players'">
         <div class="text-center space-y-6">
           <!-- Room Code Display -->
           <div class="space-y-2">
@@ -259,7 +296,7 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
 
           <div class="flex items-center justify-center gap-2 text-muted-foreground">
             <Loader2 class="w-5 h-5 animate-spin" />
-            <span>{{ t('vs.waitingForOpponent') }}</span>
+            <span>{{ t('vs.waitingForPlayers') }}</span>
           </div>
 
           <Button variant="outline" class="cursor-pointer" @click="emit('leave')">
@@ -268,7 +305,7 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
         </div>
       </template>
 
-      <!-- Lobby (both players present) -->
+      <!-- Lobby (players present) -->
       <template v-else-if="gameState === 'lobby'">
         <div class="space-y-6">
           <!-- Room Code -->
@@ -282,18 +319,26 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
             </div>
           </div>
 
-          <!-- Players -->
-          <div class="flex items-center justify-center gap-3 md:gap-4 2xl:gap-6">
-            <div class="flex flex-col items-center gap-1 p-3 md:p-4 2xl:p-5 rounded-lg bg-muted min-w-[100px] md:min-w-[120px]">
-              <span class="text-xs 2xl:text-sm text-muted-foreground">{{ t('vs.host') }}</span>
-              <span class="font-semibold text-sm md:text-base 2xl:text-lg">{{ hostName || '...' }}</span>
-              <span v-if="isHost" class="text-xs text-primary">({{ t('vs.you') }})</span>
-            </div>
-            <span class="text-xl md:text-2xl 2xl:text-3xl font-bold text-muted-foreground">VS</span>
-            <div class="flex flex-col items-center gap-1 p-3 md:p-4 2xl:p-5 rounded-lg bg-muted min-w-[100px] md:min-w-[120px]">
-              <span class="text-xs 2xl:text-sm text-muted-foreground">{{ t('vs.guest') }}</span>
-              <span class="font-semibold text-sm md:text-base 2xl:text-lg">{{ guestName || '...' }}</span>
-              <span v-if="!isHost" class="text-xs text-primary">({{ t('vs.you') }})</span>
+          <!-- Players list -->
+          <div class="space-y-2">
+            <h3 class="text-sm font-semibold">{{ t('vs.players') }} ({{ players.length }})</h3>
+            <div class="space-y-2">
+              <div
+                v-for="player in players"
+                :key="player.id"
+                class="flex items-center gap-2 p-2.5 rounded-lg bg-muted"
+              >
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                  {{ player.name.charAt(0).toUpperCase() }}
+                </div>
+                <span class="font-semibold text-sm truncate">{{ player.name }}</span>
+                <span v-if="player.role === 'host'" class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium shrink-0">
+                  {{ t('vs.host') }}
+                </span>
+                <span v-if="player.id === myPlayerId" class="text-[10px] text-muted-foreground shrink-0">
+                  ({{ t('vs.you') }})
+                </span>
+              </div>
             </div>
           </div>
 
@@ -303,12 +348,14 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
             {{ t('vs.spectators', { count: spectatorCount }) }}
           </div>
 
-          <!-- Settings display (for guest) -->
+          <!-- Settings display (for non-host) -->
           <div v-if="!isHost" class="space-y-2 bg-muted rounded-lg p-3 md:p-4 2xl:p-5">
             <h3 class="text-sm 2xl:text-base font-semibold">{{ t('sidebar.settings') }}</h3>
             <div class="text-sm 2xl:text-base space-y-1 text-muted-foreground">
-              <div>{{ t('sidebar.maxScore') }}: {{ settings.maxScore }}</div>
-              <div>{{ t('vs.timeLimit') }}: {{ settings.timeLimit > 0 ? `${settings.timeLimit}s` : t('vs.noTimeLimit') }}</div>
+              <div>{{ t('vs.gameMode') }}: {{ settings.gameMode === 'rounds' ? t('vs.roundsBased') : t('vs.targetScoreBased') }}</div>
+              <div v-if="settings.gameMode === 'rounds'">{{ t('vs.totalRounds') }}: {{ settings.totalRounds }}</div>
+              <div v-else>{{ t('vs.targetScore') }}: {{ settings.targetScore }}</div>
+              <div>{{ t('vs.timeLimit') }}: {{ settings.timeLimit }}s</div>
               <div>{{ t('sidebar.fullyEvolvedOnly') }}: {{ settings.fullyEvolvedOnly ? '✓' : '✗' }}</div>
               <div>{{ t('sidebar.includeMegaPokemon') }}: {{ settings.includeMegaPokemon ? '✓' : '✗' }}</div>
               <div>{{ t('sidebar.generation') }}: {{ settings.generation }}</div>
@@ -319,7 +366,7 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
           <Button
             v-if="isHost"
             class="w-full cursor-pointer text-base md:text-lg 2xl:text-xl py-4 md:py-6 2xl:py-7"
-            :disabled="!guestName"
+            :disabled="players.length < 2"
             @click="emit('start-game')"
           >
             {{ t('vs.startMatch') }}

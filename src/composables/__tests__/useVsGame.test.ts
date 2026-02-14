@@ -31,7 +31,7 @@ describe('useVsGame', () => {
     vi.clearAllMocks()
     vi.clearAllTimers()
     vi.useFakeTimers()
-    
+
     // Clear sessionStorage
     sessionStorage.clear()
 
@@ -47,7 +47,6 @@ describe('useVsGame', () => {
     it('should initialize with idle state', () => {
       expect(game.gameState.value).toBe('idle')
       expect(game.roomCode.value).toBe('')
-      expect(game.guest.value).toBe(null)
       expect(game.currentRound.value).toBe(null)
       expect(game.roundNumber.value).toBe(0)
     })
@@ -57,11 +56,13 @@ describe('useVsGame', () => {
         generation: 9,
         minGeneration: 1,
         maxGeneration: 9,
-        maxScore: 5,
         fullyEvolvedOnly: true,
         includeMegaPokemon: false,
         hintsEnabled: true,
-        timeLimit: 40,
+        timeLimit: 30,
+        gameMode: 'rounds',
+        totalRounds: 10,
+        targetScore: 5000,
       })
     })
 
@@ -70,15 +71,8 @@ describe('useVsGame', () => {
       expect(game.myName.value.length).toBeGreaterThan(0)
     })
 
-    it('should initialize host player', () => {
-      expect(game.host.value).toMatchObject({
-        role: 'host',
-        score: 0,
-        hasAnswered: false,
-        lastGuess: null,
-        lastGuessCorrect: null,
-        connected: true,
-      })
+    it('should initialize with empty players list', () => {
+      expect(game.players.value).toEqual([])
     })
   })
 
@@ -104,8 +98,8 @@ describe('useVsGame', () => {
       expect(game.spectators.value).toHaveLength(0)
 
       game.spectators.value = [
-        { name: 'Spec1', role: 'spectator', score: 0, hasAnswered: false, lastGuess: null, lastGuessCorrect: null, lastGuessTimestamp: null, connected: true },
-        { name: 'Spec2', role: 'spectator', score: 0, hasAnswered: false, lastGuess: null, lastGuessCorrect: null, lastGuessTimestamp: null, connected: true },
+        { id: 'spec1', name: 'Spec1', role: 'spectator', score: 0, roundScore: 0, hasAnswered: false, lastGuess: null, lastGuessCorrect: null, lastGuessTimestamp: null, connected: true },
+        { id: 'spec2', name: 'Spec2', role: 'spectator', score: 0, roundScore: 0, hasAnswered: false, lastGuess: null, lastGuessCorrect: null, lastGuessTimestamp: null, connected: true },
       ]
 
       expect(game.spectators.value).toHaveLength(2)
@@ -134,8 +128,23 @@ describe('useVsGame', () => {
     })
 
     it('should update timeLimit setting', () => {
-      game.updateSettings({ ...game.settings.value, timeLimit: 30 })
-      expect(game.settings.value.timeLimit).toBe(30)
+      game.updateSettings({ ...game.settings.value, timeLimit: 45 })
+      expect(game.settings.value.timeLimit).toBe(45)
+    })
+
+    it('should update gameMode setting', () => {
+      game.updateSettings({ ...game.settings.value, gameMode: 'target-score' })
+      expect(game.settings.value.gameMode).toBe('target-score')
+    })
+
+    it('should update totalRounds setting', () => {
+      game.updateSettings({ ...game.settings.value, totalRounds: 20 })
+      expect(game.settings.value.totalRounds).toBe(20)
+    })
+
+    it('should update targetScore setting', () => {
+      game.updateSettings({ ...game.settings.value, targetScore: 10000 })
+      expect(game.settings.value.targetScore).toBe(10000)
     })
 
     it('should update multiple settings at once', () => {
@@ -144,11 +153,15 @@ describe('useVsGame', () => {
         maxScore: 20,
         generation: 3,
         timeLimit: 45,
+        gameMode: 'target-score',
+        targetScore: 8000,
       })
 
       expect(game.settings.value.maxScore).toBe(20)
       expect(game.settings.value.generation).toBe(3)
       expect(game.settings.value.timeLimit).toBe(45)
+      expect(game.settings.value.gameMode).toBe('target-score')
+      expect(game.settings.value.targetScore).toBe(8000)
     })
   })
 
@@ -157,6 +170,7 @@ describe('useVsGame', () => {
       const testSession = {
         roomCode: 'ABCD',
         playerName: 'TestPlayer',
+        playerId: 'host',
         role: 'host' as const,
         peerId: 'test-peer',
       }
@@ -192,41 +206,29 @@ describe('useVsGame', () => {
   })
 
   describe('State Management', () => {
-    it('should track host score', () => {
-      expect(game.host.value.score).toBe(0)
+    it('should track players', () => {
+      expect(game.players.value).toEqual([])
 
-      game.host.value.score = 3
-      expect(game.host.value.score).toBe(3)
+      game.players.value = [
+        {
+          id: 'host',
+          name: 'Host Player',
+          role: 'host',
+          score: 3,
+          roundScore: 0,
+          hasAnswered: false,
+          lastGuess: null,
+          lastGuessCorrect: null,
+          lastGuessTimestamp: null,
+          connected: true,
+        },
+      ]
+
+      expect(game.players.value[0]?.name).toBe('Host Player')
+      expect(game.players.value[0]?.score).toBe(3)
     })
 
-    it('should track guest state', () => {
-      expect(game.guest.value).toBe(null)
-
-      game.guest.value = {
-        name: 'Guest Player',
-        role: 'guest',
-        score: 0,
-        hasAnswered: false,
-        lastGuess: null,
-        lastGuessCorrect: null,
-        lastGuessTimestamp: null,
-        connected: true,
-      }
-
-      expect(game.guest.value.name).toBe('Guest Player')
-    })
-
-    it('should track answer state', () => {
-      game.host.value.hasAnswered = true
-      game.host.value.lastGuess = 'pikachu'
-      game.host.value.lastGuessCorrect = true
-
-      expect(game.host.value.hasAnswered).toBe(true)
-      expect(game.host.value.lastGuess).toBe('pikachu')
-      expect(game.host.value.lastGuessCorrect).toBe(true)
-    })
-
-    it('should track match winner', () => {
+    it('should track match winner by player ID', () => {
       game.matchWinner.value = 'host'
       expect(game.matchWinner.value).toBe('host')
     })
@@ -234,14 +236,6 @@ describe('useVsGame', () => {
     it('should track elapsed time', () => {
       game.elapsedTime.value = 45
       expect(game.elapsedTime.value).toBe(45)
-    })
-
-    it('should track rematch state', () => {
-      game.rematchRequested.value = true
-      game.rematchRequestedBy.value = 'host'
-
-      expect(game.rematchRequested.value).toBe(true)
-      expect(game.rematchRequestedBy.value).toBe('host')
     })
 
     it('should track round number', () => {
@@ -256,7 +250,7 @@ describe('useVsGame', () => {
 
     it('should track spectators', () => {
       game.spectators.value = [
-        { name: 'Spec1', role: 'spectator', score: 0, hasAnswered: false, lastGuess: null, lastGuessCorrect: null, lastGuessTimestamp: null, connected: true },
+        { id: 'spec1', name: 'Spec1', role: 'spectator', score: 0, roundScore: 0, hasAnswered: false, lastGuess: null, lastGuessCorrect: null, lastGuessTimestamp: null, connected: true },
       ]
 
       expect(game.spectators.value.length).toBe(1)
@@ -271,8 +265,7 @@ describe('useVsGame', () => {
       expect(typeof game.startGame).toBe('function')
       expect(typeof game.submitGuess).toBe('function')
       expect(typeof game.updateSettings).toBe('function')
-      expect(typeof game.requestRematch).toBe('function')
-      expect(typeof game.acceptRematch).toBe('function')
+      expect(typeof game.restartGame).toBe('function')
       expect(typeof game.leaveGame).toBe('function')
       expect(typeof game.forfeitGame).toBe('function')
       expect(typeof game.rejoinRoom).toBe('function')
@@ -282,7 +275,7 @@ describe('useVsGame', () => {
 
   describe('Game State Transitions', () => {
     it('should allow state transitions', () => {
-      const states = ['idle', 'waiting-for-opponent', 'lobby', 'countdown', 'playing', 'round-result', 'match-end'] as const
+      const states = ['idle', 'waiting-for-players', 'lobby', 'countdown', 'playing', 'round-result', 'match-end'] as const
 
       for (const state of states) {
         game.gameState.value = state

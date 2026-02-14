@@ -98,7 +98,7 @@ describe('usePeerConnection', () => {
         on: vi.fn(),
       }
 
-      const testMessage: VsMessage = { type: 'player-info', name: 'Test', role: 'guest' }
+      const testMessage: VsMessage = { type: 'player-info', id: 'test-id', name: 'Test', role: 'player' }
       conn.sendTo(mockConnection as DataConnection, testMessage)
 
       expect(mockConnection.send).toHaveBeenCalledWith(testMessage)
@@ -114,7 +114,7 @@ describe('usePeerConnection', () => {
         on: vi.fn(),
       }
 
-      const testMessage: VsMessage = { type: 'player-info', name: 'Test', role: 'guest' }
+      const testMessage: VsMessage = { type: 'player-info', id: 'test-id', name: 'Test', role: 'player' }
       conn.sendTo(mockConnection as DataConnection, testMessage)
 
       expect(mockConnection.send).not.toHaveBeenCalled()
@@ -192,8 +192,8 @@ describe('usePeerConnection', () => {
 
       expect(conn.myRole.value).toBe('host')
 
-      conn.myRole.value = 'guest'
-      expect(conn.myRole.value).toBe('guest')
+      conn.myRole.value = 'player'
+      expect(conn.myRole.value).toBe('player')
 
       conn.myRole.value = 'spectator'
       expect(conn.myRole.value).toBe('spectator')
