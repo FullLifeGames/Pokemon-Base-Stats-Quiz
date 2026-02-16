@@ -1,4 +1,6 @@
 import type { QuizSettings } from './settings'
+import type { MoveInfo } from '@/composables/useLearnsetData'
+import type { DamageScenario } from '@/composables/useDamageCalc'
 
 /**
  * Roles in a VS game
@@ -61,6 +63,10 @@ export interface VsRound {
   timeRemaining: number
   hintLevel: number
   results: PlayerRoundResult[]
+  /** Quiz-mode-specific: learnset moves grouped by type (learnset mode) */
+  learnsetMoves?: Record<string, MoveInfo[]>
+  /** Quiz-mode-specific: damage scenario (damage mode) */
+  damageScenario?: DamageScenario
 }
 
 /**
@@ -95,6 +101,7 @@ export type VsMessage =
   | { type: 'game-start' }
   | { type: 'new-round'; round: VsRound }
   | { type: 'guess'; playerId: string; pokemonId: string; correct: boolean; timestamp: number }
+  | { type: 'damage-guess'; playerId: string; damagePercent: number; correct: boolean; timestamp: number }
   | { type: 'player-answered'; playerId: string }
   | { type: 'round-result'; results: PlayerRoundResult[]; correctPokemon: string }
   | { type: 'match-end'; players: VsPlayer[] }
@@ -130,6 +137,7 @@ export const defaultVsRoomSettings: VsRoomSettings = {
   includeMegaPokemon: false,
   maxScore: 5,
   hintsEnabled: true,
+  quizMode: 'base-stat',
   timeLimit: 30,
   gameMode: 'rounds',
   totalRounds: 10,

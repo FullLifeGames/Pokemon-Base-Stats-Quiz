@@ -12,6 +12,7 @@ export interface SpeciesFilterOptions {
   maxGeneration: GenerationNum
   fullyEvolvedOnly: boolean
   includeMegaPokemon: boolean
+  baseFormeOnly?: boolean
 }
 
 /**
@@ -78,6 +79,10 @@ export function useQuizLogic(
 
     if (!options.value.includeMegaPokemon) {
       list = list.filter((s) => !s.forme || !s.forme.includes('Mega'))
+    }
+
+    if (options.value.baseFormeOnly) {
+      list = list.filter((s) => !s.forme)
     }
 
     return list

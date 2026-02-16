@@ -102,7 +102,11 @@ watch(() => correctGuesses.value, (newVal) => {
 onMounted(() => {
   startTimer();
 });
-const currentStats = computed(() => getPokemonStats(currentPokemon.value));
+
+const currentStats = computed(() => {
+  if (!currentPokemon.value) return null
+  return getPokemonStats(currentPokemon.value)
+})
 
 const value = ref("");
 

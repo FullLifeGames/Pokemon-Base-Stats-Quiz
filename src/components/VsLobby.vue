@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import GenerationSelect from './GenerationSelect.vue'
 import { Copy, Users, Eye, ArrowLeft, Loader2 } from 'lucide-vue-next'
 import type { VsRoomSettings, VsPlayer, GameMode } from '@/types/vsMode'
+import type { QuizMode } from '@/types/settings'
 import type { GenerationNum } from '@pkmn/dex'
 
 const { t } = useI18n()
@@ -61,6 +62,16 @@ const updateSetting = <K extends keyof VsRoomSettings>(key: K, value: VsRoomSett
 const setGameMode = (mode: GameMode) => {
   emit('update-settings', { ...props.settings, gameMode: mode })
 }
+
+const setQuizMode = (mode: QuizMode) => {
+  emit('update-settings', { ...props.settings, quizMode: mode })
+}
+
+const quizModes: { value: QuizMode; labelKey: string }[] = [
+  { value: 'base-stat', labelKey: 'sidebar.quizModes.baseStat' },
+  { value: 'learnset', labelKey: 'sidebar.quizModes.learnset' },
+  { value: 'damage', labelKey: 'sidebar.quizModes.damage' },
+]
 </script>
 
 <template>
@@ -111,6 +122,22 @@ const setGameMode = (mode: GameMode) => {
           <!-- Settings -->
           <div class="space-y-4">
             <h3 class="text-sm font-semibold">{{ t('sidebar.settings') }}</h3>
+
+            <!-- Quiz Mode (what kind of quiz) -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium">{{ t('sidebar.quizMode') }}</label>
+              <div class="flex rounded-lg border overflow-hidden">
+                <button
+                  v-for="mode in quizModes"
+                  :key="mode.value"
+                  class="flex-1 px-2 py-2 text-xs font-medium transition-colors cursor-pointer"
+                  :class="settings.quizMode === mode.value ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
+                  @click="setQuizMode(mode.value)"
+                >
+                  {{ t(mode.labelKey) }}
+                </button>
+              </div>
+            </div>
 
             <!-- Game Mode -->
             <div class="space-y-2">
@@ -352,6 +379,7 @@ const setGameMode = (mode: GameMode) => {
           <div v-if="!isHost" class="space-y-2 bg-muted rounded-lg p-3 md:p-4 2xl:p-5">
             <h3 class="text-sm 2xl:text-base font-semibold">{{ t('sidebar.settings') }}</h3>
             <div class="text-sm 2xl:text-base space-y-1 text-muted-foreground">
+              <div>{{ t('sidebar.quizMode') }}: {{ t(`sidebar.quizModes.${settings.quizMode === 'base-stat' ? 'baseStat' : settings.quizMode}`) }}</div>
               <div>{{ t('vs.gameMode') }}: {{ settings.gameMode === 'rounds' ? t('vs.roundsBased') : t('vs.targetScoreBased') }}</div>
               <div v-if="settings.gameMode === 'rounds'">{{ t('vs.totalRounds') }}: {{ settings.totalRounds }}</div>
               <div v-else>{{ t('vs.targetScore') }}: {{ settings.targetScore }}</div>

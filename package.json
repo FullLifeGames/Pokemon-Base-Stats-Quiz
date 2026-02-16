@@ -8,13 +8,16 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "generate:names": "node scripts/generatePokemonNames.js",
+    "generate:setdex": "node scripts/generateSetdex.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
+    "@pkmn/data": "^0.10.6",
     "@pkmn/dex": "^0.10.6",
     "@pkmn/img": "^0.3.3",
+    "@smogon/calc": "^0.10.0",
     "@tailwindcss/vite": "^4.1.18",
     "@vueuse/core": "^14.2.0",
     "class-variance-authority": "^0.7.1",

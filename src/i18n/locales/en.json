@@ -1,5 +1,5 @@
 {
-  "title": "Pokémon Stats Quiz: Identify the Stats!",
+  "title": "Pokémon Quiz Hub",
   "correct": "Correct",
   "incorrect": "Incorrect",
   "resetQuiz": "Reset Quiz",
@@ -46,7 +46,13 @@
     "hintsEnabled": "Enable Hints",
     "madeBy": "Made by",
     "english": "English",
-    "deutsch": "Deutsch"
+    "deutsch": "Deutsch",
+    "quizMode": "Quiz Mode",
+    "quizModes": {
+      "baseStat": "Base Stats",
+      "learnset": "Learnset",
+      "damage": "Damage Calc"
+    }
   },
   "requestHint": "Request Hint",
   "requestSecondHint": "Request Second Hint",
@@ -62,8 +68,8 @@
     "startNewQuiz": "Start New Quiz"
   },
   "modeSelect": {
-    "title": "Pokémon Stats Quiz",
-    "subtitle": "How well do you know your Pokémon base stats?",
+    "title": "Pokémon Quiz Hub",
+    "subtitle": "Test your Pokémon knowledge across multiple quiz modes!",
     "solo": "Solo Quiz",
     "soloDesc": "Test your knowledge at your own pace",
     "vs": "VS Mode",
@@ -142,5 +148,29 @@
       "connection-error": "Connection error. Please try again.",
       "peer-unavailable": "Could not connect to the room."
     }
+  },
+  "learnset": {
+    "title": "Learnset Quiz",
+    "explanation": "These are the moves a Pokémon can learn — can you identify which one?"
+  },
+  "damage": {
+    "title": "Damage Quiz",
+    "explanation": "Guess the damage percentage (±{tolerance}% tolerance).",
+    "vsExplanation": "Guess the damage percentage (±{tolerance}% tolerance) this move deals!",
+    "attacker": "Attacker",
+    "defender": "Defender",
+    "ability": "Ability",
+    "item": "Item",
+    "nature": "Nature",
+    "evs": "EVs",
+    "teraType": "Tera Type",
+    "actualDamage": "Actual Damage",
+    "average": "avg",
+    "guessPrompt": "How much % damage does this move deal?",
+    "guessPlaceholder": "e.g. 45",
+    "submit": "Submit",
+    "correctGuess": "✓ Correct! You guessed {guess}% — actual was {actual}%.",
+    "incorrectGuess": "✗ Incorrect! You guessed {guess}% — actual was {actual}%.",
+    "noScenario": "Could not generate a damage scenario. Try again."
   }
 }

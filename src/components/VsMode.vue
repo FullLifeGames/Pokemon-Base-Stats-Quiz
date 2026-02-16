@@ -44,6 +44,7 @@ const {
   rejoinRoom,
   startGame,
   submitGuess,
+  submitDamageGuess,
   restartGame,
   updateSettings,
   leaveGame,
@@ -161,8 +162,9 @@ const showResults = computed(() => gameState.value === 'match-end')
     :is-spectator="isSpectator"
     :game-state="gameState"
     :species="species"
-    :settings="{ timeLimit: settings.timeLimit, gameMode: settings.gameMode, totalRounds: settings.totalRounds, targetScore: settings.targetScore }"
+    :settings="settings"
     @submit-guess="submitGuess"
+    @submit-damage-guess="submitDamageGuess"
     @quit="handleQuit"
   />
 

@@ -1,5 +1,5 @@
 {
-  "title": "Pokémon-Stat-Quiz: Erkenne die Stats!",
+  "title": "Pokémon-Quiz-Hub",
   "correct": "Korrekt",
   "incorrect": "Falsch",
   "resetQuiz": "Quiz zurücksetzen",
@@ -46,7 +46,13 @@
     "hintsEnabled": "Hinweise aktivieren",
     "madeBy": "Erstellt von",
     "english": "English",
-    "deutsch": "Deutsch"
+    "deutsch": "Deutsch",
+    "quizMode": "Quiz-Modus",
+    "quizModes": {
+      "baseStat": "Base-Stats",
+      "learnset": "Attacken",
+      "damage": "Schadensrechner"
+    }
   },
   "requestHint": "Hinweis anfordern",
   "requestSecondHint": "Zweiten Hinweis anfordern",
@@ -62,8 +68,8 @@
     "startNewQuiz": "Neues Quiz starten"
   },
   "modeSelect": {
-    "title": "Pokémon-Stat-Quiz",
-    "subtitle": "Wie gut kennst du die Base-Stats deiner Pokémon?",
+    "title": "Pokémon-Quiz-Hub",
+    "subtitle": "Teste dein Pokémon-Wissen in verschiedenen Quiz-Modi!",
     "solo": "Solo-Quiz",
     "soloDesc": "Teste dein Wissen in deinem eigenen Tempo",
     "vs": "VS-Modus",
@@ -142,5 +148,29 @@
       "connection-error": "Verbindungsfehler. Bitte versuche es erneut.",
       "peer-unavailable": "Verbindung zum Raum nicht möglich."
     }
+  },
+  "learnset": {
+    "title": "Attacken-Quiz",
+    "explanation": "Dies sind die Attacken, die ein Pokémon lernen kann — erkennst du, welches es ist?"
+  },
+  "damage": {
+    "title": "Schadens-Quiz",
+    "explanation": "Schätze den Schadensprozentsatz (±{tolerance}% Toleranz).",
+    "vsExplanation": "Schätze den Schadensprozentsatz (±{tolerance}% Toleranz) dieser Attacke!",
+    "attacker": "Angreifer",
+    "defender": "Verteidiger",
+    "ability": "Fähigkeit",
+    "item": "Item",
+    "nature": "Wesen",
+    "evs": "EVs",
+    "teraType": "Tera-Typ",
+    "actualDamage": "Tatsächlicher Schaden",
+    "average": "Ø",
+    "guessPrompt": "Wie viel % Schaden macht diese Attacke?",
+    "guessPlaceholder": "z.B. 45",
+    "submit": "Absenden",
+    "correctGuess": "✓ Richtig! Du hast {guess}% geschätzt — tatsächlich war es {actual}%.",
+    "incorrectGuess": "✗ Falsch! Du hast {guess}% geschätzt — tatsächlich war es {actual}%.",
+    "noScenario": "Schadenszenario konnte nicht erstellt werden. Versuche es erneut."
   }
 }

@@ -34,6 +34,7 @@ describe('VsLobby.vue', () => {
     gameMode: 'rounds',
     totalRounds: 10,
     targetScore: 5000,
+    quizMode: 'base-stat',
   }
 
   const createPlayer = (overrides: Partial<VsPlayer> = {}): VsPlayer => ({

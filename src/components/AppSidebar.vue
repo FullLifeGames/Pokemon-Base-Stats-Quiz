@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Globe } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import type { QuizSettings } from '@/types/settings'
+import type { QuizMode } from '@/types/settings'
 import type { GenerationNum } from '@pkmn/dex'
 import GenerationSelect from './GenerationSelect.vue'
 import {
@@ -38,7 +39,7 @@ const emit = defineEmits<{
   'update:settings': [value: QuizSettings]
 }>()
 
-const appTitle = computed(() => locale.value === 'en' ? 'Pokémon Stats Quiz' : 'Pokémon-Stat-Quiz')
+const appTitle = computed(() => locale.value === 'en' ? 'Pokémon Quiz Hub' : 'Pokémon-Quiz-Hub')
 
 const changeLocale = (newLocale: string) => {
   locale.value = newLocale
@@ -72,6 +73,16 @@ const updateMaxScore = (newMaxScore: number) => {
 const updateHintsEnabled = (value: boolean) => {
   emit('update:settings', { ...props.settings, hintsEnabled: value })
 }
+
+const updateQuizMode = (mode: QuizMode) => {
+  emit('update:settings', { ...props.settings, quizMode: mode })
+}
+
+const quizModes: { value: QuizMode; labelKey: string }[] = [
+  { value: 'base-stat', labelKey: 'sidebar.quizModes.baseStat' },
+  { value: 'learnset', labelKey: 'sidebar.quizModes.learnset' },
+  { value: 'damage', labelKey: 'sidebar.quizModes.damage' },
+]
 </script>
 
 <template>
@@ -97,6 +108,24 @@ const updateHintsEnabled = (value: boolean) => {
           <SidebarMenu>
             <SidebarMenuItem>
               <div class="px-2 py-2 text-sm space-y-4">
+                <!-- Quiz Mode Selector -->
+                <div class="flex flex-col gap-2">
+                  <label class="text-sm font-medium">{{ t('sidebar.quizMode') }}</label>
+                  <div class="flex flex-col gap-1">
+                    <button
+                      v-for="mode in quizModes"
+                      :key="mode.value"
+                      class="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm transition-colors cursor-pointer text-left"
+                      :class="settings.quizMode === mode.value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent'"
+                      @click="updateQuizMode(mode.value)"
+                    >
+                      {{ t(mode.labelKey) }}
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Fully Evolved Only Checkbox (First) -->
                 <div class="flex items-center gap-2">
                   <input 
@@ -110,7 +139,7 @@ const updateHintsEnabled = (value: boolean) => {
                     {{ t('sidebar.fullyEvolvedOnly') }}
                   </label>
                 </div>
-                
+
                 <!-- Include Mega Pokémon Checkbox (Second) -->
                 <div class="flex items-center gap-2">
                   <input 

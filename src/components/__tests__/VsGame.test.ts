@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
 import VsGame from '@/components/VsGame.vue'
-import type { VsPlayer, VsRound } from '@/types/vsMode'
+import type { VsPlayer, VsRound, VsRoomSettings } from '@/types/vsMode'
 import type { Species } from '@pkmn/dex'
 
 // Mock vue
@@ -25,6 +26,34 @@ vi.mock('vue-i18n', () => ({
 vi.mock('@/lib/pokemonNameHelper', () => ({
   getLocalizedPokemonName: (name: string) => name.charAt(0).toUpperCase() + name.slice(1),
 }))
+
+// Mock useQuizLogic
+vi.mock('@/composables/useQuizLogic', () => {
+  return {
+    useQuizLogic: () => ({
+      speciesSelection: ref([
+        { label: 'Pikachu', value: 'pikachu' },
+        { label: 'Charizard', value: 'charizard' },
+      ]),
+      getPokemonStats: (pokemon: any) => ({
+        hp: pokemon.baseStats.hp,
+        attack: pokemon.baseStats.atk,
+        defense: pokemon.baseStats.def,
+        specialAttack: pokemon.baseStats.spa,
+        specialDefense: pokemon.baseStats.spd,
+        speed: pokemon.baseStats.spe,
+      }),
+      getLocalizedName: (name: string) => name.charAt(0).toUpperCase() + name.slice(1),
+      findSpecies: (name: string) => {
+        const species = [
+          { name: 'pikachu', baseStats: { hp: 35, atk: 55, def: 40, spa: 50, spd: 50, spe: 90 } },
+          { name: 'charizard', baseStats: { hp: 78, atk: 84, def: 78, spa: 109, spd: 85, spe: 100 } },
+        ]
+        return species.find(s => s.name === name)
+      },
+    }),
+  }
+})
 
 describe('VsGame.vue', () => {
   const mockSpecies: Species[] = [
@@ -66,6 +95,21 @@ describe('VsGame.vue', () => {
   const hostPlayer = createPlayer({ id: 'host', name: 'Host', role: 'host' })
   const playerTwo = createPlayer({ id: 'player-2', name: 'Player2', role: 'player' })
 
+  const defaultSettings: VsRoomSettings = {
+    timeLimit: 40,
+    gameMode: 'rounds',
+    totalRounds: 10,
+    targetScore: 5000,
+    maxScore: 10,
+    hintsEnabled: false,
+    generation: 9,
+    minGeneration: 1,
+    maxGeneration: 9,
+    fullyEvolvedOnly: false,
+    includeMegaPokemon: false,
+    quizMode: 'base-stat',
+  }
+
   const defaultProps = {
     players: [hostPlayer, playerTwo],
     myPlayerId: 'host',
@@ -75,7 +119,7 @@ describe('VsGame.vue', () => {
     isSpectator: false,
     gameState: 'playing',
     species: mockSpecies,
-    settings: { timeLimit: 40, gameMode: 'rounds' as const, totalRounds: 10, targetScore: 5000 },
+    settings: defaultSettings,
   }
 
   beforeEach(() => {

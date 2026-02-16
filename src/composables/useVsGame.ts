@@ -2,6 +2,8 @@ import { ref, computed, watch, onUnmounted } from 'vue'
 import type { DataConnection } from 'peerjs'
 import { usePeerConnection } from './usePeerConnection'
 import { useQuizLogic, type SpeciesFilterOptions } from './useQuizLogic'
+import { useLearnsetData } from './useLearnsetData'
+import { useDamageCalc } from './useDamageCalc'
 import type {
   VsGameState,
   VsPlayer,
@@ -20,6 +22,7 @@ import {
   generateRoomCode,
   calculateRoundScore,
 } from '@/types/vsMode'
+import type { GenerationNum } from '@pkmn/dex'
 
 const SESSION_KEY = 'pokemon-quiz-vs-session'
 const GAME_STATE_KEY = 'pokemon-quiz-vs-gamestate'
@@ -127,6 +130,13 @@ export function useVsGame() {
     hasMatchingStats,
     findSpecies,
   } = useQuizLogic(speciesOptions, quizLocale)
+
+  // Learnset data (for learnset quiz mode)
+  const vsGeneration = computed<GenerationNum>(() => settings.value.generation as GenerationNum)
+  const { getLearnsetMoves } = useLearnsetData(vsGeneration)
+
+  // Damage calc (for damage quiz mode)
+  const { generateDamageScenario, isDamageGuessCorrect, waitUntilReady: waitDamageReady } = useDamageCalc(vsGeneration, speciesOptions)
 
   // --- Helpers ---
   function createPlayer(id: string, name: string, role: PlayerRole): VsPlayer {
@@ -370,6 +380,25 @@ export function useVsGame() {
         }
         break
 
+      case 'damage-guess':
+        if (isHosting.value) {
+          const player = players.value.find(p => p.id === msg.playerId)
+          if (player && !player.hasAnswered) {
+            player.hasAnswered = true
+            player.lastGuess = String(msg.damagePercent)
+            player.lastGuessCorrect = msg.correct
+            player.lastGuessTimestamp = Date.now()
+
+            sendToAll({ type: 'player-answered', playerId: msg.playerId })
+            broadcastToSpectators()
+
+            if (allPlayersAnswered.value) {
+              resolveRound()
+            }
+          }
+        }
+        break
+
       case 'player-answered':
         if (!isHosting.value) {
           const player = players.value.find(p => p.id === msg.playerId)
@@ -553,21 +582,52 @@ export function useVsGame() {
   }
 
   // --- Host: Start Round ---
-  function startNewRound() {
+  async function startNewRound() {
     if (!isHosting.value) return
 
-    const pokemon = generateRandomPokemon()
+    const quizMode = settings.value.quizMode ?? 'base-stat'
     roundNumber.value++
     roundStartTime = Date.now()
 
-    const round: VsRound = {
-      number: roundNumber.value,
-      pokemonId: pokemon.name,
-      pokemonTypes: [...pokemon.types],
-      pokemonAbilities: Object.values(pokemon.abilities).filter(a => a) as string[],
-      timeRemaining: settings.value.timeLimit,
-      hintLevel: 0,
-      results: [],
+    let round: VsRound
+
+    if (quizMode === 'damage') {
+      // Damage mode: generate a damage scenario (no specific target Pokémon)
+      await waitDamageReady()
+      const scenario = generateDamageScenario()
+      round = {
+        number: roundNumber.value,
+        pokemonId: scenario ? scenario.attackerName : 'Unknown',
+        pokemonTypes: [],
+        pokemonAbilities: [],
+        timeRemaining: settings.value.timeLimit,
+        hintLevel: 0,
+        results: [],
+        damageScenario: scenario ?? undefined,
+      }
+    } else {
+      // Base stat & learnset modes both need a random Pokémon
+      const pokemon = generateRandomPokemon()
+      round = {
+        number: roundNumber.value,
+        pokemonId: pokemon.name,
+        pokemonTypes: [...pokemon.types],
+        pokemonAbilities: Object.values(pokemon.abilities).filter(a => a) as string[],
+        timeRemaining: settings.value.timeLimit,
+        hintLevel: 0,
+        results: [],
+      }
+
+      // For learnset mode, attach the learnset data
+      if (quizMode === 'learnset') {
+        try {
+          const moves = await getLearnsetMoves(pokemon)
+          round.learnsetMoves = moves
+        } catch {
+          // Fallback: empty learnset
+          round.learnsetMoves = {}
+        }
+      }
     }
 
     currentRound.value = round
@@ -656,10 +716,18 @@ export function useVsGame() {
     const pokemon = findSpecies(pokemonId)
     if (!pokemon) return
 
-    const targetPokemon = findSpecies(currentRound.value.pokemonId)
-    if (!targetPokemon) return
+    const quizMode = settings.value.quizMode ?? 'base-stat'
+    let correct = false
 
-    const correct = hasMatchingStats(pokemon, targetPokemon)
+    if (quizMode === 'learnset') {
+      // Learnset mode: exact species match
+      correct = pokemonId === currentRound.value.pokemonId
+    } else {
+      // Base stat mode: stat-signature match
+      const targetPokemon = findSpecies(currentRound.value.pokemonId)
+      if (!targetPokemon) return
+      correct = hasMatchingStats(pokemon, targetPokemon)
+    }
 
     if (isHosting.value) {
       myPlayer.hasAnswered = true
@@ -683,6 +751,46 @@ export function useVsGame() {
         type: 'guess',
         playerId: myPlayerId.value,
         pokemonId,
+        correct,
+        timestamp: Date.now(),
+      })
+    }
+  }
+
+  // --- Player: Submit Damage Guess ---
+  function submitDamageGuess(damagePercent: number) {
+    if (!currentRound.value || gameState.value !== 'playing') return
+    if (myRole.value === 'spectator') return
+
+    const myPlayer = me.value
+    if (!myPlayer || myPlayer.hasAnswered) return
+
+    const scenario = currentRound.value.damageScenario
+    if (!scenario) return
+
+    const correct = isDamageGuessCorrect(damagePercent, scenario.damagePercent, 5)
+
+    if (isHosting.value) {
+      myPlayer.hasAnswered = true
+      myPlayer.lastGuess = String(damagePercent)
+      myPlayer.lastGuessCorrect = correct
+      myPlayer.lastGuessTimestamp = Date.now()
+
+      sendToAll({ type: 'player-answered', playerId: myPlayerId.value })
+      broadcastToSpectators()
+
+      if (allPlayersAnswered.value) {
+        resolveRound()
+      }
+    } else {
+      myPlayer.hasAnswered = true
+      myPlayer.lastGuess = String(damagePercent)
+      myPlayer.lastGuessCorrect = correct
+
+      sendToAll({
+        type: 'damage-guess',
+        playerId: myPlayerId.value,
+        damagePercent,
         correct,
         timestamp: Date.now(),
       })
@@ -918,6 +1026,7 @@ export function useVsGame() {
     rejoinRoom,
     startGame,
     submitGuess,
+    submitDamageGuess,
     restartGame,
     updateSettings,
     leaveGame,

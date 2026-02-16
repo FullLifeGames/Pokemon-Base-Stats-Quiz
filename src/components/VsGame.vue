@@ -2,14 +2,18 @@
 import { computed, ref, watch } from 'vue'
 import { Clock, LogOut, Swords, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import { Slider } from '@/components/ui/slider'
 import { useI18n } from 'vue-i18n'
 import { useQuizLogic, type SpeciesFilterOptions } from '@/composables/useQuizLogic'
 import PlayerCard from './PlayerCard.vue'
 import StatDisplay from './StatDisplay.vue'
+import LearnsetDisplay from './LearnsetDisplay.vue'
+import DamageScenarioDisplay from './DamageScenarioDisplay.vue'
 import PokemonSelector from './PokemonSelector.vue'
 import HintDisplay from './HintDisplay.vue'
 import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue'
-import type { VsPlayer, VsRound, GameMode, PlayerRoundResult } from '@/types/vsMode'
+import type { VsPlayer, VsRound, VsRoomSettings, PlayerRoundResult } from '@/types/vsMode'
+import type { QuizMode } from '@/types/settings'
 import type { Species, GenerationNum } from '@pkmn/dex'
 
 const { t, locale } = useI18n()
@@ -23,47 +27,40 @@ const props = defineProps<{
   isSpectator: boolean
   gameState: string
   species: Species[]
-  settings: { timeLimit: number; gameMode: GameMode; totalRounds: number; targetScore: number }
+  settings: VsRoomSettings
 }>()
 
 const emit = defineEmits<{
   'submit-guess': [pokemonId: string]
+  'submit-damage-guess': [damagePercent: number]
   'quit': []
 }>()
 
 const value = ref('')
+const damageGuessValue = ref([50])
 const hasAnswered = ref(false)
 const infoBannerDismissed = ref(false)
 
-// Shared quiz logic (stats extraction, localized names)
-const speciesOptions = computed<SpeciesFilterOptions>(() => ({
-  generation: 9,
-  minGeneration: 1,
-  maxGeneration: 9,
-  fullyEvolvedOnly: false,
-  includeMegaPokemon: false,
-}))
+const quizMode = computed<QuizMode>(() => props.settings.quizMode ?? 'base-stat')
+
+// Shared quiz logic (stats extraction, localized names, species selection)
+const speciesOptions = computed<SpeciesFilterOptions>(() => props.settings)
 
 const {
+  speciesSelection,
   getPokemonStats,
   getLocalizedName,
+  findSpecies,
 } = useQuizLogic(speciesOptions, locale)
 
 const generation = computed<GenerationNum>(() => speciesOptions.value.generation as GenerationNum)
 
 // Current pokemon stats
 const currentStats = computed(() => {
-  const pokemon = props.species.find(s => s.name === props.currentRound.pokemonId)
+  const pokemon = findSpecies(props.currentRound.pokemonId)
   if (!pokemon) return null
   return getPokemonStats(pokemon)
 })
-
-const speciesSelection = computed(() =>
-  props.species.map((pokemon) => ({
-    label: getLocalizedName(pokemon.name),
-    value: pokemon.name,
-  }))
-)
 
 const selectedPokemon = computed(() =>
   speciesSelection.value.find((pokemon) => pokemon.value === value.value)
@@ -115,7 +112,20 @@ const topRoundScorer = computed(() => {
 
 // Answer display for spectators
 const correctPokemonName = computed(() => {
+  if (quizMode.value === 'damage') {
+    const scenario = props.currentRound.damageScenario
+    return scenario ? `${scenario.damagePercent}%` : '?'
+  }
   return getLocalizedName(props.currentRound.pokemonId)
+})
+
+// Info banner text
+const infoBannerText = computed(() => {
+  switch (quizMode.value) {
+    case 'learnset': return t('learnset.explanation')
+    case 'damage': return t('damage.vsExplanation', { tolerance: 5 })
+    default: return t('vs.identifyStats')
+  }
 })
 
 // Game progress display
@@ -129,16 +139,26 @@ const progressLabel = computed(() => {
 // Reset selection on new round
 watch(() => props.roundNumber, () => {
   value.value = ''
+  damageGuessValue.value = [50]
   hasAnswered.value = false
 })
 
 function selectPokemon(selectedValue: string) {
   if (props.isSpectator) return
-  if (hasAnswered.value) return // Can't change after submitting
+  if (hasAnswered.value) return
 
   value.value = selectedValue
   hasAnswered.value = true
   emit('submit-guess', value.value)
+}
+
+function submitDamageAnswer() {
+  if (props.isSpectator) return
+  if (hasAnswered.value) return
+  const guess = damageGuessValue.value[0] ?? 0
+
+  hasAnswered.value = true
+  emit('submit-damage-guess', guess)
 }
 </script>
 
@@ -213,7 +233,7 @@ function selectPokemon(selectedValue: string) {
 
         <!-- Info banner -->
         <div v-if="!infoBannerDismissed" class="hidden md:flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 px-4 2xl:px-5 py-3 2xl:py-4 rounded-lg text-sm 2xl:text-base">
-          <p>{{ t('vs.identifyStats') }}</p>
+          <p>{{ infoBannerText }}</p>
           <button
             @click="infoBannerDismissed = true"
             class="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors cursor-pointer shrink-0"
@@ -223,13 +243,31 @@ function selectPokemon(selectedValue: string) {
           </button>
         </div>
 
-        <StatDisplay :stats="currentStats" :show-bst="true" />
+        <!-- Quiz content: mode-dependent -->
+        <template v-if="quizMode === 'base-stat'">
+          <StatDisplay :stats="currentStats" :show-bst="true" />
+          <HintDisplay
+            :hint-level="currentRound.hintLevel"
+            :types="currentRound.pokemonTypes"
+            :abilities="currentRound.pokemonAbilities"
+          />
+        </template>
 
-        <HintDisplay
-          :hint-level="currentRound.hintLevel"
-          :types="currentRound.pokemonTypes"
-          :abilities="currentRound.pokemonAbilities"
-        />
+        <template v-else-if="quizMode === 'learnset'">
+          <LearnsetDisplay :moves="currentRound.learnsetMoves ?? null" />
+          <HintDisplay
+            :hint-level="currentRound.hintLevel"
+            :types="currentRound.pokemonTypes"
+            :abilities="currentRound.pokemonAbilities"
+          />
+        </template>
+
+        <template v-else-if="quizMode === 'damage'">
+          <DamageScenarioDisplay
+            :scenario="currentRound.damageScenario ?? null"
+            :show-answer="isRoundResult"
+          />
+        </template>
       </div>
 
       <!-- Right column: selector + result -->
@@ -239,27 +277,61 @@ function selectPokemon(selectedValue: string) {
           <!-- Current selection indicator -->
           <div v-if="hasAnswered" class="text-center py-1.5 md:py-2 bg-muted/50 rounded-lg">
             <p class="text-xs md:text-sm text-muted-foreground">
-              {{ t('vs.youAnswered', { pokemon: selectedPokemon?.label || value }) }}
+              <template v-if="quizMode === 'damage'">
+                {{ t('vs.youAnswered', { pokemon: damageGuessValue[0] + '%' }) }}
+              </template>
+              <template v-else>
+                {{ t('vs.youAnswered', { pokemon: selectedPokemon?.label || value }) }}
+              </template>
             </p>
             <p class="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
               {{ t('vs.playersAnswered', { n: answeredCount, total: players.length }) }}
             </p>
           </div>
 
-          <!-- Pokemon selector - show only if not yet answered -->
+          <!-- Pokemon selector for base-stat / learnset modes -->
           <PokemonSelector
-            v-if="!hasAnswered"
+            v-if="!hasAnswered && quizMode !== 'damage'"
             :species-selection="speciesSelection"
             :selected-value="value"
             @select="selectPokemon"
           />
+
+          <!-- Damage guess input for damage mode -->
+          <div v-if="!hasAnswered && quizMode === 'damage'" class="flex flex-col items-center gap-4 w-full max-w-md mx-auto">
+            <p class="text-sm text-muted-foreground">{{ t('damage.guessPrompt') }}</p>
+            <div class="w-full space-y-3">
+              <div class="flex items-center justify-center gap-3">
+                <span class="text-3xl md:text-4xl font-bold font-mono text-primary">{{ damageGuessValue[0] }}%</span>
+              </div>
+              <Slider
+                v-model="damageGuessValue"
+                :min="0"
+                :max="200"
+                :step="1"
+                class="w-full"
+              />
+              <div class="flex justify-between text-xs text-muted-foreground">
+                <span>0%</span>
+                <span>200%</span>
+              </div>
+            </div>
+            <Button @click="submitDamageAnswer" class="cursor-pointer w-full">
+              {{ t('damage.submit') }}
+            </Button>
+          </div>
         </div>
 
         <!-- Round Result -->
         <div v-if="isRoundResult" class="flex items-center justify-center lg:flex-1">
           <div class="rounded-xl px-5 md:px-6 2xl:px-8 py-4 md:py-5 2xl:py-6 inline-flex flex-col items-center gap-2 md:gap-3 shadow-sm border w-full max-w-sm 2xl:max-w-md bg-card">
-            <div class="w-20 h-20 md:w-24 md:h-24 2xl:w-32 2xl:h-32 flex items-center justify-center">
+            <!-- Sprite for base-stat / learnset modes -->
+            <div v-if="quizMode !== 'damage'" class="w-20 h-20 md:w-24 md:h-24 2xl:w-32 2xl:h-32 flex items-center justify-center">
               <SpritesRenderer class="max-w-full max-h-full" :generation="generation" :name="currentRound.pokemonId" />
+            </div>
+            <!-- Damage answer icon -->
+            <div v-else class="text-4xl md:text-5xl 2xl:text-6xl">
+              🎯
             </div>
             <p class="text-xs md:text-sm 2xl:text-base opacity-80">
               {{ t('vs.correctAnswer') }}: <strong>{{ correctPokemonName }}</strong>
