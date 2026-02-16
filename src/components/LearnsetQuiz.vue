@@ -304,7 +304,7 @@ function selectPokemon(selectedValue: string) {
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{{ t('congratulations.title') }}</DialogTitle>
-          <DialogDescription>{{ t('congratulations.message') }}</DialogDescription>
+          <DialogDescription>{{ incorrectGuesses === 0 ? t('congratulations.messagePerfect') : t('congratulations.message') }}</DialogDescription>
         </DialogHeader>
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">

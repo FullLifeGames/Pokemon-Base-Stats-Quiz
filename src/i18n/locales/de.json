@@ -62,7 +62,8 @@
   },
   "congratulations": {
     "title": "Glückwunsch!",
-    "message": "Du hast das Quiz mit einer perfekten Punktzahl abgeschlossen!",
+    "messagePerfect": "Du hast das Quiz mit einer perfekten Punktzahl abgeschlossen!",
+    "message": "Du hast das Quiz abgeschlossen!",
     "finalScore": "Endscore",
     "timeElapsed": "Verstrichene Zeit",
     "startNewQuiz": "Neues Quiz starten"

@@ -62,7 +62,8 @@
   },
   "congratulations": {
     "title": "Congratulations!",
-    "message": "You've completed the quiz with a perfect score!",
+    "messagePerfect": "You've completed the quiz with a perfect score!",
+    "message": "You've completed the quiz!",
     "finalScore": "Final Score",
     "timeElapsed": "Time Elapsed",
     "startNewQuiz": "Start New Quiz"
