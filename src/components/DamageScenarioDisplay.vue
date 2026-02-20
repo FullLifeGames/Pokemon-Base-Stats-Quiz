@@ -98,8 +98,8 @@ function getTerrainIcon(terrain: string): string {
           <div v-if="scenario.attackerSet.item"><strong>{{ t('damage.item') }}:</strong> {{ scenario.attackerSet.item }}</div>
           <div v-if="scenario.attackerSet.nature"><strong>{{ t('damage.nature') }}:</strong> {{ scenario.attackerSet.nature }}</div>
           <div v-if="scenario.attackerSet.evs"><strong>{{ t('damage.evs') }}:</strong> {{ formatEvs(scenario.attackerSet.evs) }}</div>
-          <div v-if="scenario.attackerSet.teraType">
-            <strong>{{ t('damage.teraType') }}:</strong> {{ scenario.attackerSet.teraType }}
+          <div v-if="scenario.attackerTeraType" class="font-semibold text-purple-600 dark:text-purple-400">
+            💎 <strong>{{ t('damage.teraType') }}:</strong> {{ scenario.attackerTeraType }}
           </div>
         </div>
       </div>
@@ -135,8 +135,8 @@ function getTerrainIcon(terrain: string): string {
           <div v-if="scenario.defenderSet.item"><strong>{{ t('damage.item') }}:</strong> {{ scenario.defenderSet.item }}</div>
           <div v-if="scenario.defenderSet.nature"><strong>{{ t('damage.nature') }}:</strong> {{ scenario.defenderSet.nature }}</div>
           <div v-if="scenario.defenderSet.evs"><strong>{{ t('damage.evs') }}:</strong> {{ formatEvs(scenario.defenderSet.evs) }}</div>
-          <div v-if="scenario.defenderSet.teraType">
-            <strong>{{ t('damage.teraType') }}:</strong> {{ scenario.defenderSet.teraType }}
+          <div v-if="scenario.defenderTeraType" class="font-semibold text-purple-600 dark:text-purple-400">
+            💎 <strong>{{ t('damage.teraType') }}:</strong> {{ scenario.defenderTeraType }}
           </div>
         </div>
       </div>

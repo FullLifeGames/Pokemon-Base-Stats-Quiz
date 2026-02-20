@@ -7,6 +7,7 @@ import {
   Field,
 } from '@smogon/calc'
 import { Dex, type GenerationNum } from '@pkmn/dex'
+import type { TypeName } from '@smogon/calc/dist/data/interface'
 import type { SpeciesFilterOptions } from '@/composables/useQuizLogic'
 
 /**
@@ -80,6 +81,10 @@ export interface DamageScenario {
   damageRange: [number, number]
   /** Active field effects triggered by Pokémon abilities. */
   fieldEffects?: FieldEffects
+  /** Tera type the attacker is actively using (only set when tera is active). */
+  attackerTeraType?: TypeName
+  /** Tera type the defender is actively using (only set when tera is active). */
+  defenderTeraType?: TypeName
 }
 
 /**
@@ -227,7 +232,7 @@ export function useDamageCalc(
   const EXCLUDED_SET_PREFIXES = ['Balanced Hackmons', 'Almost Any Ability']
 
   /** VGC or Doubles metagame set name prefixes to include/exclude. */
-  const DOUBLES_SET_PREFIXES = ['Doubles', 'VGC']
+  const DOUBLES_SET_PREFIXES = ['Doubles', 'VGC', 'National Dex Doubles']
 
   /** Filter out non-standard metagame sets from a Pokémon's set entries. */
   function filterStandardSets(setEntries: [string, SetdexSet][]): [string, SetdexSet][] {
@@ -294,6 +299,15 @@ export function useDamageCalc(
         const [defName, defSets] = defEntry
         const [defSetName, defSet] = randomPick(Object.entries(defSets))
 
+        // Tera: ~5% chance per Pokémon to activate tera (gen 9+ only, if set has a teraType)
+        const TERA_CHANCE = 0.05
+        const activeAtkTeraType = (generation.value >= 9 && atkSet.teraType && Math.random() < TERA_CHANCE)
+          ? atkSet.teraType as TypeName
+          : undefined
+        const activeDefTeraType = (generation.value >= 9 && defSet.teraType && Math.random() < TERA_CHANCE)
+          ? defSet.teraType as TypeName
+          : undefined
+
         // Build @smogon/calc objects
         const attacker = new Pokemon(gen.value, atkName, {
           level: level.value,
@@ -302,6 +316,7 @@ export function useDamageCalc(
           ability: atkSet.ability,
           evs: toStatSpread(atkSet.evs),
           ivs: atkSet.ivs ? toStatSpread(atkSet.ivs) : undefined,
+          teraType: activeAtkTeraType,
         })
 
         const defender = new Pokemon(gen.value, defName, {
@@ -311,6 +326,7 @@ export function useDamageCalc(
           ability: defSet.ability,
           evs: toStatSpread(defSet.evs),
           ivs: defSet.ivs ? toStatSpread(defSet.ivs) : undefined,
+          teraType: activeDefTeraType,
         })
 
         const move = new Move(gen.value, moveName)
@@ -361,6 +377,8 @@ export function useDamageCalc(
             Math.round(maxPct * 10) / 10,
           ],
           fieldEffects: Object.keys(scenarioFieldEffects).length > 0 ? scenarioFieldEffects : undefined,
+          attackerTeraType: activeAtkTeraType,
+          defenderTeraType: activeDefTeraType,
         }
       } catch {
         // Some sets may reference invalid Pokémon/moves — skip
