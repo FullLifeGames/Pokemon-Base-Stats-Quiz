@@ -364,11 +364,11 @@ export function useVsGame() {
       case 'guess':
         if (isHosting.value) {
           const player = players.value.find(p => p.id === msg.playerId)
-          if (player && !player.hasAnswered) {
+          if (player) {
             player.hasAnswered = true
             player.lastGuess = msg.pokemonId
             player.lastGuessCorrect = msg.correct
-            player.lastGuessTimestamp = Date.now() // Host records arrival time
+            player.lastGuessTimestamp = Date.now() // Host records arrival time (reset on re-answer)
 
             // Notify all players that someone answered
             sendToAll({ type: 'player-answered', playerId: msg.playerId })
@@ -384,7 +384,7 @@ export function useVsGame() {
       case 'damage-guess':
         if (isHosting.value) {
           const player = players.value.find(p => p.id === msg.playerId)
-          if (player && !player.hasAnswered) {
+          if (player) {
             player.hasAnswered = true
             player.lastGuess = String(msg.damagePercent)
             player.lastGuessCorrect = msg.correct
@@ -665,15 +665,17 @@ export function useVsGame() {
 
       currentRound.value.timeRemaining--
 
-      // Auto-hints based on time
+      // Auto-hints based on time (only if hints are enabled)
       const totalTime = settings.value.timeLimit
       const remaining = currentRound.value.timeRemaining
 
-      if (remaining <= Math.floor(totalTime / 2) && currentRound.value.hintLevel < 1) {
-        currentRound.value.hintLevel = 1
-      }
-      if (remaining <= Math.floor(totalTime * 1 / 4) && currentRound.value.hintLevel < 2) {
-        currentRound.value.hintLevel = 2
+      if (settings.value.hintsEnabled) {
+        if (remaining <= Math.floor(totalTime / 2) && currentRound.value.hintLevel < 1) {
+          currentRound.value.hintLevel = 1
+        }
+        if (remaining <= Math.floor(totalTime * 1 / 4) && currentRound.value.hintLevel < 2) {
+          currentRound.value.hintLevel = 2
+        }
       }
 
       // Sync timer to all players
@@ -712,7 +714,7 @@ export function useVsGame() {
     if (myRole.value === 'spectator') return
 
     const myPlayer = me.value
-    if (!myPlayer || myPlayer.hasAnswered) return // Can't change after submitting
+    if (!myPlayer) return
 
     const pokemon = findSpecies(pokemonId)
     if (!pokemon) return
@@ -764,7 +766,7 @@ export function useVsGame() {
     if (myRole.value === 'spectator') return
 
     const myPlayer = me.value
-    if (!myPlayer || myPlayer.hasAnswered) return
+    if (!myPlayer) return
 
     const scenario = currentRound.value.damageScenario
     if (!scenario) return
@@ -874,7 +876,7 @@ export function useVsGame() {
         if (gameState.value === 'round-result' && isHosting.value) {
           startNewRound()
         }
-      }, 3000)
+      }, 5000)
     }
   }
 

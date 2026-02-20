@@ -10,6 +10,7 @@ import PlayerCard from './PlayerCard.vue'
 import StatDisplay from './StatDisplay.vue'
 import LearnsetDisplay from './LearnsetDisplay.vue'
 import DamageScenarioDisplay from './DamageScenarioDisplay.vue'
+import DamageHintDisplay from './DamageHintDisplay.vue'
 import PokemonSelector from './PokemonSelector.vue'
 import HintDisplay from './HintDisplay.vue'
 import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue'
@@ -120,6 +121,8 @@ const correctPokemonName = computed(() => {
   return getLocalizedName(props.currentRound.pokemonId)
 })
 
+// Damage quiz hints (logic moved to DamageHintDisplay component)
+
 // Info banner text
 const infoBannerText = computed(() => {
   switch (quizMode.value) {
@@ -146,20 +149,34 @@ watch(() => props.roundNumber, () => {
 
 function selectPokemon(selectedValue: string) {
   if (props.isSpectator) return
-  if (hasAnswered.value) return
 
   value.value = selectedValue
   hasAnswered.value = true
   emit('submit-guess', value.value)
 }
 
+function changeAnswer() {
+  hasAnswered.value = false
+  value.value = ''
+}
+
+function changeDamageAnswer() {
+  hasAnswered.value = false
+}
+
 function submitDamageAnswer() {
   if (props.isSpectator) return
-  if (hasAnswered.value) return
   const guess = damageGuessValue.value[0] ?? 0
 
   hasAnswered.value = true
   emit('submit-damage-guess', guess)
+}
+
+// Get localized display name for a player's guess
+function getGuessDisplayName(guess: string | null): string {
+  if (!guess) return '—'
+  if (quizMode.value === 'damage') return `${guess}%`
+  return getLocalizedName(guess) || guess
 }
 </script>
 
@@ -248,6 +265,7 @@ function submitDamageAnswer() {
         <template v-if="quizMode === 'base-stat'">
           <StatDisplay :stats="currentStats" :show-bst="true" />
           <HintDisplay
+            v-if="settings.hintsEnabled"
             :hint-level="currentRound.hintLevel"
             :types="currentRound.pokemonTypes"
             :abilities="currentRound.pokemonAbilities"
@@ -257,6 +275,7 @@ function submitDamageAnswer() {
         <template v-else-if="quizMode === 'learnset'">
           <LearnsetDisplay :moves="currentRound.learnsetMoves ?? null" />
           <HintDisplay
+            v-if="settings.hintsEnabled"
             :hint-level="currentRound.hintLevel"
             :types="currentRound.pokemonTypes"
             :abilities="currentRound.pokemonAbilities"
@@ -269,6 +288,12 @@ function submitDamageAnswer() {
             :show-answer="isRoundResult"
             :level="settings.vgc ? 50 : 100"
             :generation="generation"
+          />
+          <!-- Damage-specific hints (auto-revealed by timer) -->
+          <DamageHintDisplay
+            v-if="settings.hintsEnabled && currentRound.damageScenario"
+            :damage-percent="currentRound.damageScenario.damagePercent"
+            :hint-level="currentRound.hintLevel"
           />
         </template>
       </div>
@@ -290,6 +315,12 @@ function submitDamageAnswer() {
             <p class="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
               {{ t('vs.playersAnswered', { n: answeredCount, total: players.length }) }}
             </p>
+            <button
+              class="text-xs text-primary hover:underline cursor-pointer mt-1"
+              @click="quizMode === 'damage' ? changeDamageAnswer() : changeAnswer()"
+            >
+              {{ t('vs.canChangeAnswer') }}
+            </button>
           </div>
 
           <!-- Pokemon selector for base-stat / learnset modes -->
@@ -351,7 +382,12 @@ function submitDamageAnswer() {
                   'bg-muted': !result.guess,
                 }"
               >
-                <span class="font-medium truncate mr-2">{{ result.playerName }}</span>
+                <div class="flex flex-col min-w-0 mr-2">
+                <span class="font-medium truncate">{{ result.playerName }}</span>
+                <span class="text-xs text-muted-foreground truncate">
+                  {{ getGuessDisplayName(result.guess) }}
+                </span>
+              </div>
                 <span
                   class="font-bold shrink-0"
                   :class="{

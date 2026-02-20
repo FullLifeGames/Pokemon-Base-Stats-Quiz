@@ -265,21 +265,6 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
                   {{ t('sidebar.quizSettings') }}
                 </AccordionTrigger>
                 <AccordionContent class="space-y-3 pt-2">
-                  <!-- Max Score -->
-                  <div class="flex flex-col gap-2">
-                    <label for="maxScoreInput" class="text-sm font-medium">
-                      {{ t('sidebar.maxScore') }}
-                    </label>
-                    <Input
-                      id="maxScoreInput"
-                      type="number"
-                      :model-value="settings.maxScore"
-                      @update:model-value="(val) => updateSetting('maxScore', Math.max(1, typeof val === 'number' ? val : parseInt(val as string) || 1))"
-                      min="1"
-                      max="999"
-                    />
-                  </div>
-
                   <!-- Hints Enabled -->
                   <div class="flex items-center gap-2">
                     <input

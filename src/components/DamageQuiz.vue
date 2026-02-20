@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useI18n } from 'vue-i18n'
 import { useDamageCalc, MAX_DAMAGE_PERCENT, type DamageScenario } from '@/composables/useDamageCalc'
 import DamageScenarioDisplay from '@/components/DamageScenarioDisplay.vue'
+import DamageHintDisplay from '@/components/DamageHintDisplay.vue'
 import type { QuizSettings } from '@/types/settings'
 import type { GenerationNum } from '@pkmn/dex'
 
@@ -104,27 +105,8 @@ const isCorrect = computed(() => {
 })
 
 // Hint 1: Damage range (eliminate parts of the slider)
-const damageRangeHint = computed(() => {
-  if (!currentScenario.value) return null
-  const actual = currentScenario.value.damagePercent
-  const third = MAX_DAMAGE_PERCENT / 3
-  
-  // Divide slider into 3 broad ranges
-  if (actual < third) return `0-${Math.round(third)}%`
-  if (actual < third * 2) return `${Math.round(third)}-${Math.round(third * 2)}%`
-  return `${Math.round(third * 2)}-${MAX_DAMAGE_PERCENT}%`
-})
-
 // Hint 2: OHKO/2HKO/3HKO indicator
-const koIndicator = computed(() => {
-  if (!currentScenario.value) return null
-  const damage = currentScenario.value.damagePercent
-  if (damage >= 100) return 'OHKO (One-Hit Knockout)'
-  if (damage >= 50) return '2HKO (Two-Hit Knockout)'
-  if (damage >= 33.4) return '3HKO (Three-Hit Knockout)'
-  if (damage >= 25) return '4HKO (Four-Hit Knockout)'
-  return '5+HKO (Five or More Hits to Knockout)'
-})
+// (logic moved to DamageHintDisplay component)
 
 // Start on mount
 onMounted(async () => {
@@ -245,24 +227,11 @@ function submitGuess() {
             {{ hintLevel === 0 ? t('requestHint') : t('requestSecondHint') }}
           </Button>
           
-          <div v-if="hintLevel >= 1" class="bg-yellow-50 dark:bg-yellow-950 text-yellow-900 dark:text-yellow-100 px-3 md:px-4 py-2 md:py-3 rounded-lg text-xs md:text-sm">
-            <div class="flex flex-col gap-1.5 md:gap-2">
-              <div class="flex items-center gap-1.5 md:gap-2">
-                <LightbulbIcon class="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
-                <div>
-                  <strong>{{ t('hints.damageRange') }}:</strong>
-                  <span class="ml-1 md:ml-2">{{ damageRangeHint }}</span>
-                </div>
-              </div>
-              <div v-if="hintLevel >= 2" class="flex items-center gap-1.5 md:gap-2">
-                <LightbulbIcon class="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
-                <div>
-                  <strong>{{ t('hints.koIndicator') }}:</strong>
-                  <span class="ml-1 md:ml-2">{{ koIndicator }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <DamageHintDisplay
+            v-if="currentScenario"
+            :damage-percent="currentScenario.damagePercent"
+            :hint-level="hintLevel"
+          />
         </div>
 
         <!-- Guess Input -->

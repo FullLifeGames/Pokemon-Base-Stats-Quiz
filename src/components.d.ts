@@ -27,6 +27,7 @@ declare module 'vue' {
     CommandList: typeof import('./components/ui/command/CommandList.vue')['default']
     CommandSeparator: typeof import('./components/ui/command/CommandSeparator.vue')['default']
     CommandShortcut: typeof import('./components/ui/command/CommandShortcut.vue')['default']
+    DamageHintDisplay: typeof import('./components/DamageHintDisplay.vue')['default']
     DamageQuiz: typeof import('./components/DamageQuiz.vue')['default']
     DamageScenarioDisplay: typeof import('./components/DamageScenarioDisplay.vue')['default']
     Dialog: typeof import('./components/ui/dialog/Dialog.vue')['default']
