@@ -134,7 +134,7 @@ export function useVsGame() {
 
   // Learnset data (for learnset quiz mode)
   const vsGeneration = computed<GenerationNum>(() => settings.value.generation as GenerationNum)
-  const { getLearnsetMoves } = useLearnsetData(vsGeneration)
+  const { getRandomPokemonWithMoves } = useLearnsetData(vsGeneration)
 
   // Damage calc (for damage quiz mode)
   const { generateDamageScenario, isDamageGuessCorrect, waitUntilReady: waitDamageReady } = useDamageCalc(vsGeneration, speciesOptions)
@@ -608,7 +608,17 @@ export function useVsGame() {
       }
     } else {
       // Base stat & learnset modes both need a random Pokémon
-      const pokemon = generateRandomPokemon()
+      let pokemon
+      let learnsetMoves
+
+      if (quizMode === 'learnset') {
+        const result = await getRandomPokemonWithMoves(generateRandomPokemon)
+        pokemon = result.pokemon
+        learnsetMoves = result.moves
+      } else {
+        pokemon = generateRandomPokemon()
+      }
+
       round = {
         number: roundNumber.value,
         pokemonId: pokemon.name,
@@ -617,17 +627,7 @@ export function useVsGame() {
         timeRemaining: settings.value.timeLimit,
         hintLevel: 0,
         results: [],
-      }
-
-      // For learnset mode, attach the learnset data
-      if (quizMode === 'learnset') {
-        try {
-          const moves = await getLearnsetMoves(pokemon)
-          round.learnsetMoves = moves
-        } catch {
-          // Fallback: empty learnset
-          round.learnsetMoves = {}
-        }
+        ...(learnsetMoves && { learnsetMoves }),
       }
     }
 

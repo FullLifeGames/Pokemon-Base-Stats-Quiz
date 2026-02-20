@@ -32,7 +32,7 @@ const showExplanation = ref(true)
 const hintLevel = ref(0)
 const resultMessageRef = ref<HTMLDivElement | null>(null)
 const currentMoves = ref<MovesByType | null>(null)
-const isLoadingMoves = ref(false)
+const isLoadingMoves = ref(true)
 let timerInterval: ReturnType<typeof setInterval> | null = null
 let loadingInterval: number | undefined
 
@@ -52,25 +52,17 @@ const {
   getLocalizedName,
 } = useQuizLogic(speciesOptions, locale)
 
-const { getLearnsetMoves } = useLearnsetData(generation)
+const { getRandomPokemonWithMoves } = useLearnsetData(generation)
 
-const currentPokemon = ref(generateRandomPokemon())
+const currentPokemon = ref<ReturnType<typeof generateRandomPokemon>>(null!)
 const value = ref('')
-
-const MAX_LEARNSET_RETRIES = 20
 
 async function loadMoves() {
   isLoadingMoves.value = true
-  let retries = 0
   try {
-    let moves = await getLearnsetMoves(currentPokemon.value)
-    // Retry with a different Pokémon if learnset is empty for this generation
-    while (Object.keys(moves).length === 0 && retries < MAX_LEARNSET_RETRIES) {
-      currentPokemon.value = generateRandomPokemon()
-      moves = await getLearnsetMoves(currentPokemon.value)
-      retries++
-    }
-    currentMoves.value = moves
+    const result = await getRandomPokemonWithMoves(generateRandomPokemon)
+    currentPokemon.value = result.pokemon
+    currentMoves.value = result.moves
   } catch {
     currentMoves.value = null
   }
@@ -78,7 +70,6 @@ async function loadMoves() {
 }
 
 const resetQuiz = async () => {
-  currentPokemon.value = generateRandomPokemon()
   value.value = ''
   progressValue.value = 0
   clearInterval(loadingInterval)
@@ -143,7 +134,6 @@ const isCorrect = computed(() => {
 })
 
 const nextPokemon = async () => {
-  currentPokemon.value = generateRandomPokemon()
   value.value = ''
   progressValue.value = 0
   hintLevel.value = 0

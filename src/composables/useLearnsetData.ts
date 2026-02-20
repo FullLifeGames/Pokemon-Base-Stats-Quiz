@@ -103,10 +103,37 @@ export function useLearnsetData(
     return result
   }
 
+  /**
+   * Generate a random Pokémon that has a non-empty learnset.
+   * Retries up to `maxAttempts` times with the provided generator.
+   */
+  async function getRandomPokemonWithMoves(
+    generateRandomPokemon: () => Species,
+    maxAttempts = 20,
+  ): Promise<{ pokemon: Species; moves: MovesByType }> {
+    let pokemon = generateRandomPokemon()
+    let moves: MovesByType = {}
+    let attempts = 0
+
+    while (attempts < maxAttempts) {
+      try {
+        moves = await getLearnsetMoves(pokemon)
+      } catch {
+        moves = {}
+      }
+      if (Object.keys(moves).length > 0) break
+      pokemon = generateRandomPokemon()
+      attempts++
+    }
+
+    return { pokemon, moves }
+  }
+
   return {
     gen,
     getLearnsetMoves,
     flattenMoves,
     getRandomMovesSubset,
+    getRandomPokemonWithMoves,
   }
 }
