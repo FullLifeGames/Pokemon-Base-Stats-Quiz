@@ -165,8 +165,8 @@
     "title": "Schadens-Quiz",
     "titleVgc": "VGC-Schadens-Quiz",
     "titleSingles": "Einzel-Schadens-Quiz",
-    "explanation": "Schätze den Schadensprozentsatz (±{tolerance}% Toleranz).",
-    "vsExplanation": "Schätze den Schadensprozentsatz (±{tolerance}% Toleranz) dieser Attacke!",
+    "explanation": "Schätze den Schadensprozentsatz innerhalb der Schadensroll-Spanne.",
+    "vsExplanation": "Schätze den Schadensprozentsatz innerhalb der Schadensroll-Spanne!",
     "attacker": "Angreifer",
     "defender": "Verteidiger",
     "ability": "Fähigkeit",
@@ -194,8 +194,8 @@
     "guessPrompt": "Wie viel % Schaden macht diese Attacke?",
     "guessPlaceholder": "z.B. 45",
     "submit": "Absenden",
-    "correctGuess": "✓ Richtig! Du hast {guess}% geschätzt — tatsächlich war es {actual}%.",
-    "incorrectGuess": "✗ Falsch! Du hast {guess}% geschätzt — tatsächlich war es {actual}%.",
+    "correctGuess": "✓ Richtig! Du hast {guess}% geschätzt — tatsächliche Spanne war {min}-{max}%.",
+    "incorrectGuess": "✗ Falsch! Du hast {guess}% geschätzt — tatsächliche Spanne war {min}-{max}%.",
     "noScenario": "Schadenszenario konnte nicht erstellt werden. Versuche es erneut."
   }
 }

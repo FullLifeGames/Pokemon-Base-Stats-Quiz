@@ -372,14 +372,13 @@ export function useDamageCalc(
   }
 
   /**
-   * Check if a user's guess is within the tolerance range.
+   * Check if a user's guess falls within the damage roll range.
    */
   function isDamageGuessCorrect(
     guess: number,
-    actual: number,
-    tolerance = 5,
+    damageRange: [number, number],
   ): boolean {
-    return Math.abs(guess - actual) <= tolerance
+    return guess >= Math.floor(damageRange[0]) && guess <= Math.ceil(damageRange[1])
   }
 
   return {

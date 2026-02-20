@@ -165,8 +165,8 @@
     "title": "Damage Quiz",
     "titleVgc": "VGC Damage Quiz",
     "titleSingles": "Singles Damage Quiz",
-    "explanation": "Guess the damage percentage (±{tolerance}% tolerance).",
-    "vsExplanation": "Guess the damage percentage (±{tolerance}% tolerance) this move deals!",
+    "explanation": "Guess the damage percentage within the damage roll range.",
+    "vsExplanation": "Guess the damage percentage within the damage roll range!",
     "attacker": "Attacker",
     "defender": "Defender",
     "ability": "Ability",
@@ -194,8 +194,8 @@
     "guessPrompt": "How much % damage does this move deal?",
     "guessPlaceholder": "e.g. 45",
     "submit": "Submit",
-    "correctGuess": "✓ Correct! You guessed {guess}% — actual was {actual}%.",
-    "incorrectGuess": "✗ Incorrect! You guessed {guess}% — actual was {actual}%.",
+    "correctGuess": "✓ Correct! You guessed {guess}% — actual range was {min}-{max}%.",
+    "incorrectGuess": "✗ Incorrect! You guessed {guess}% — actual range was {min}-{max}%.",
     "noScenario": "Could not generate a damage scenario. Try again."
   }
 }

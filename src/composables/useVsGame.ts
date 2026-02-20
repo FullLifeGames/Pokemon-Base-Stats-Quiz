@@ -771,7 +771,7 @@ export function useVsGame() {
     const scenario = currentRound.value.damageScenario
     if (!scenario) return
 
-    const correct = isDamageGuessCorrect(damagePercent, scenario.damagePercent, 5)
+    const correct = isDamageGuessCorrect(damagePercent, scenario.damageRange)
 
     if (isHosting.value) {
       myPlayer.hasAnswered = true

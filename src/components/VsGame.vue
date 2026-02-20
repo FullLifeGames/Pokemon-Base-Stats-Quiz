@@ -116,7 +116,7 @@ const topRoundScorer = computed(() => {
 const correctPokemonName = computed(() => {
   if (quizMode.value === 'damage') {
     const scenario = props.currentRound.damageScenario
-    return scenario ? `${scenario.damagePercent}%` : '?'
+    return scenario ? `${scenario.damageRange[0]}-${scenario.damageRange[1]}%` : '?'
   }
   return getLocalizedName(props.currentRound.pokemonId)
 })
@@ -127,7 +127,7 @@ const correctPokemonName = computed(() => {
 const infoBannerText = computed(() => {
   switch (quizMode.value) {
     case 'learnset': return t('learnset.explanation')
-    case 'damage': return t('damage.vsExplanation', { tolerance: 5 })
+    case 'damage': return t('damage.vsExplanation')
     default: return t('vs.identifyStats')
   }
 })

@@ -21,8 +21,6 @@ const props = defineProps({
   },
 })
 
-const TOLERANCE = 5 // ±5% tolerance for correct answer
-
 const progressValue = ref(0)
 const correctGuesses = ref(0)
 const incorrectGuesses = ref(0)
@@ -101,7 +99,7 @@ watch(() => correctGuesses.value, (newVal) => {
 const isCorrect = computed(() => {
   if (!hasAnswered.value || !currentScenario.value) return null
   const guess = guessValue.value[0] ?? 0
-  return isDamageGuessCorrect(guess, currentScenario.value.damagePercent, TOLERANCE)
+  return isDamageGuessCorrect(guess, currentScenario.value.damageRange)
 })
 
 // Hint 1: Damage range (eliminate parts of the slider)
@@ -142,7 +140,7 @@ function submitGuess() {
 
   hasAnswered.value = true
 
-  if (isDamageGuessCorrect(guess, currentScenario.value.damagePercent, TOLERANCE)) {
+  if (isDamageGuessCorrect(guess, currentScenario.value.damageRange)) {
     correctGuesses.value++
   } else {
     incorrectGuesses.value++
@@ -190,7 +188,7 @@ function submitGuess() {
 
       <!-- Explanation Text -->
       <div v-if="showExplanation" class="flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 px-4 md:px-6 py-3 md:py-4 rounded-lg text-sm md:text-base">
-        <p>{{ t('damage.explanation', { tolerance: TOLERANCE }) }}</p>
+        <p>{{ t('damage.explanation') }}</p>
         <button
           @click="showExplanation = false"
           class="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors cursor-pointer shrink-0"
@@ -271,13 +269,13 @@ function submitGuess() {
             v-if="isCorrect"
             class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base text-center"
           >
-            {{ t('damage.correctGuess', { guess: guessValue[0], actual: currentScenario.damagePercent }) }}
+            {{ t('damage.correctGuess', { guess: guessValue[0], min: currentScenario.damageRange[0], max: currentScenario.damageRange[1] }) }}
           </div>
           <div
             v-else
             class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base text-center"
           >
-            {{ t('damage.incorrectGuess', { guess: guessValue[0], actual: currentScenario.damagePercent }) }}
+            {{ t('damage.incorrectGuess', { guess: guessValue[0], min: currentScenario.damageRange[0], max: currentScenario.damageRange[1] }) }}
           </div>
         </div>
 
