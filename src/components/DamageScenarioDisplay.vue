@@ -3,8 +3,14 @@ import { useI18n } from 'vue-i18n'
 import type { DamageScenario } from '@/composables/useDamageCalc'
 import type { GenerationNum } from '@pkmn/dex'
 import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue'
+import { getLocalizedPokemonName } from '@/lib/pokemonNameHelper'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+function localizedName(name?: string): string {
+  if (!name) return ''
+  return getLocalizedPokemonName(name, String(locale?.value || ''))
+}
 
 const props = defineProps<{
   scenario: DamageScenario | null
@@ -82,7 +88,7 @@ function getTerrainIcon(terrain: string): string {
             <SpritesRenderer v-if="generation" class="max-w-full max-h-full" :generation="generation" :name="scenario.attackerName" />
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ scenario.attackerName }}</h3>
+            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ localizedName(scenario.attackerName) }}</h3>
             <p class="text-[10px] md:text-xs text-muted-foreground italic">{{ scenario.attackerSetName }}</p>
             <p v-if="level" class="text-[10px] md:text-xs font-semibold text-red-600 dark:text-red-400">{{ t('damage.level', { level }) }}</p>
           </div>
@@ -119,7 +125,7 @@ function getTerrainIcon(terrain: string): string {
             <SpritesRenderer v-if="generation" class="max-w-full max-h-full" :generation="generation" :name="scenario.defenderName" />
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ scenario.defenderName }}</h3>
+            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ localizedName(scenario.defenderName) }}</h3>
             <p class="text-[10px] md:text-xs text-muted-foreground italic">{{ scenario.defenderSetName }}</p>
             <p v-if="level" class="text-[10px] md:text-xs font-semibold text-blue-600 dark:text-blue-400">{{ t('damage.level', { level }) }}</p>
           </div>
