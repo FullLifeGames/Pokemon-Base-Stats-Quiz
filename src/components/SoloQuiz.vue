@@ -1,14 +1,33 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import AppSidebar from './AppSidebar.vue'
 import BaseStatQuiz from './BaseStatQuiz.vue'
 import LearnsetQuiz from './LearnsetQuiz.vue'
 import DamageQuiz from './DamageQuiz.vue'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
-import type { QuizSettings } from '@/types/settings'
+import type { QuizSettings, QuizMode } from '@/types/settings'
 import { defaultSettings } from '@/types/settings'
 
-const settings = ref<QuizSettings>({ ...defaultSettings })
+const route = useRoute()
+const settings = ref<QuizSettings>({
+  ...defaultSettings,
+  quizMode: (route.meta.quizMode as QuizMode) || defaultSettings.quizMode,
+  vgc: (route.meta.vgc as boolean) ?? defaultSettings.vgc,
+})
+
+// Watch for route changes to update quiz mode and VGC setting
+watch(
+  () => [route.meta.quizMode, route.meta.vgc],
+  ([newMode, newVgc]) => {
+    if (newMode) {
+      settings.value.quizMode = newMode as QuizMode
+    }
+    if (newVgc !== undefined) {
+      settings.value.vgc = newVgc as boolean
+    }
+  },
+)
 </script>
 
 <template>

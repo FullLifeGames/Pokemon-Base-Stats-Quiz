@@ -26,13 +26,14 @@ Choose from three different quiz types:
 
 **3. Damage Calc Quiz**
 - **Damage Scenarios**: Shows attacker vs defender matchups with moves
-- **Slider Interface**: Interactive 0-200% slider for damage guesses
+- **Slider Interface**: Interactive 0-110% slider for damage guesses
 - **Tolerance Scoring**: ±5% tolerance for correct answers
 - **Multi-Generation Support**: Works with competitive sets from Gen 1-9
 - **Smart Filtering**: Respects all settings (generation, fully evolved, mega filter)
 - **Curated Sets**: Filters out CAP Pokémon and non-standard metagames (Balanced Hackmons, Almost Any Ability)
 - **Dynamic Loading**: Lazy-loads generation-specific setdex data (code-split per generation)
 - **Detailed Display**: Shows abilities, items, natures, EVs, and Tera types for each scenario
+- **Field Effects**: Automatically detects and applies weather (Sun, Rain, Sand, Snow) and terrain (Grassy, Electric, Psychic, Misty) from Pokémon abilities, with defender's ability taking precedence
 
 #### VS Mode (Multiplayer)
 - **Peer-to-Peer Multiplayer**: Real-time competitive gameplay via WebRTC (PeerJS)
@@ -282,7 +283,7 @@ For detailed testing information, see [TESTING.md](./TESTING.md)
 3. **Play the Quiz**:
    - **Base Stats**: View stats, request hints, select Pokémon
    - **Learnset**: View moves by type, request hints, select Pokémon
-   - **Damage Calc**: View battle scenario, use slider (0-200%), submit guess
+   - **Damage Calc**: View battle scenario, use slider (0-110%), submit guess
    - Watch score update and timer count
 
 4. **Win the Quiz**:
@@ -326,7 +327,7 @@ For detailed testing information, see [TESTING.md](./TESTING.md)
    - **Damage Calc**: View battle scenario with slider
 3. **Submit Answer**: 
    - **Base Stats & Learnset**: Select Pokémon from list
-   - **Damage Calc**: Adjust slider (0-200%), submit guess
+   - **Damage Calc**: Adjust slider (0-110%), submit guess
    - Locked after first submission
 4. **Time-Based Scoring**: 
    - Correct answers: 1000 points (instant) → 100 points (at deadline)
@@ -401,13 +402,20 @@ The app uses @pkmn/dex for all Pokémon data. To update:
 
 **Damage Calc Quiz**
 - Guess damage percentage from competitive battle scenarios
-- Interactive slider interface (0-200% with 1% increments)
+- Interactive slider interface (0-110% with 1% increments)
 - Shows detailed matchup: attacker, defender, move, abilities, items, natures, EVs
 - ±5% tolerance for correct answers
 - Uses real competitive sets from Smogon for Gen 1-9
 - Filters out CAP Pokémon and non-standard metagames
 - Dynamic loading with code-splitting per generation (saves bandwidth)
 - Respects all settings (generation range, fully evolved, mega filter)
+- Possibilitiy to filter between Singles and VGC
+- **Field Effect Detection**: Automatically triggers weather and terrain effects based on Pokémon abilities:
+  - Weather abilities: Drought (Sun), Drizzle (Rain), Sand Stream (Sandstorm), Snow Warning (Snow), and more
+  - Terrain abilities: Grassy Surge, Electric Surge, Psychic Surge, Misty Surge
+  - Defender's ability takes precedence when both Pokémon have conflicting field effects
+  - Active effects displayed with icons (☀️🌧️🌪️❄️ for weather, 🌿⚡🔮🌸 for terrain)
+  - Field effects integrated into damage calculations via @smogon/calc
 
 ### Smart Selection System
 The Base Stats quiz doesn't require exact Pokémon names. If a Pokémon has identical base stats to the displayed stats, it's considered correct. This allows for legitimate alternatives.
@@ -442,7 +450,7 @@ Customize the difficulty by setting how many correct answers are needed to compl
 - Pokémon with identical base stats will both be accepted as correct (by design)
 - Generation 9 (Paldea) is the maximum supported generation
 - Some Pokémon forms may not have German names (falls back to English)
-- Damage scenarios are limited to 1-200% damage range (filtered by generator)
+- Damage scenarios are limited to 1-110% damage range (filtered by generator)
 - Learnset quiz uses base forms only (no alternate forms)
 - Some older generation Pokémon may have limited competitive sets available
 - VS Mode requires all players to have stable internet connections
@@ -498,7 +506,7 @@ The codebase serves as a reference for combining AI assistance with best practic
 - **Advanced Damage Calculations**: Integration with @smogon/calc for realistic competitive battle damage using 4798 Pokémon across Gen 1-9
 - **Dynamic Data Loading**: Lazy-loading with code-splitting per generation (saves ~3.6MB total, loads only needed gen)
 - **Smart Filtering**: CAP Pokémon exclusion, non-standard metagame filtering, empty learnset handling
-- **Interactive Slider UI**: Smooth 0-200% damage input with cursor feedback and prominent value display
+- **Interactive Slider UI**: Smooth 0-110% damage input with cursor feedback and prominent value display
 - **Code Quality**: Refactored components to maximize reusability with useQuizLogic composable
 - **Settings Reactivity**: All quiz modes respond instantly to configuration changes
 - **Form Filtering**: Learnset quiz uses base forms only (prevents confusion with alternate forms)

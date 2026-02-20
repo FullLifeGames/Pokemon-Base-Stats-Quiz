@@ -119,6 +119,7 @@ export function useVsGame() {
     maxGeneration: settings.value.maxGeneration,
     fullyEvolvedOnly: settings.value.fullyEvolvedOnly,
     includeMegaPokemon: settings.value.includeMegaPokemon,
+    vgc: settings.value.vgc,
   }))
 
   // locale is not needed in useVsGame — VsGame.vue handles display.

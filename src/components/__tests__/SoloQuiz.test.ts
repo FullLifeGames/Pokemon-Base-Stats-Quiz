@@ -1,7 +1,17 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import SoloQuiz from '@/components/SoloQuiz.vue'
 import { defaultSettings } from '@/types/settings'
+
+// Mock useRoute
+vi.mock('vue-router', () => ({
+  useRoute: () => ({
+    meta: {
+      quizMode: 'base-stat',
+      vgc: false,
+    },
+  }),
+}))
 
 describe('SoloQuiz.vue', () => {
   const mountComponent = () => {
@@ -22,6 +32,12 @@ describe('SoloQuiz.vue', () => {
           },
           BaseStatQuiz: {
             template: '<div>BaseStatQuiz</div>',
+          },
+          LearnsetQuiz: {
+            template: '<div>LearnsetQuiz</div>',
+          },
+          DamageQuiz: {
+            template: '<div>DamageQuiz</div>',
           },
         },
       },
@@ -54,26 +70,34 @@ describe('SoloQuiz.vue', () => {
     it('initializes with default settings', () => {
       const wrapper = mountComponent()
       const vm = wrapper.vm as any
-      expect(vm.settings).toEqual(defaultSettings)
+      // Settings should be initialized from route.meta
+      expect(vm.settings.quizMode).toBe('base-stat')
+      expect(vm.settings.vgc).toBe(false)
+      expect(vm.settings.generation).toBe(defaultSettings.generation)
+      expect(vm.settings.maxScore).toBe(defaultSettings.maxScore)
     })
 
     it('passes settings to AppSidebar', () => {
       const wrapper = mountComponent()
       const vm = wrapper.vm as any
-      expect(vm.settings).toEqual(defaultSettings)
+      // Settings should include route.meta values
+      expect(vm.settings.quizMode).toBe('base-stat')
+      expect(vm.settings.vgc).toBe(false)
     })
 
     it('passes settings to BaseStatQuiz', () => {
       const wrapper = mountComponent()
       const vm = wrapper.vm as any
-      expect(vm.settings).toEqual(defaultSettings)
+      // Settings should include route.meta values
+      expect(vm.settings.quizMode).toBe('base-stat')
+      expect(vm.settings.vgc).toBe(false)
     })
 
     it('updates settings when emitted from AppSidebar', async () => {
       const wrapper = mountComponent()
       const vm = wrapper.vm as any
       
-      const newSettings = { ...defaultSettings, generation: 5 }
+      const newSettings = { ...vm.settings, generation: 5 }
       vm.settings = newSettings
       await wrapper.vm.$nextTick()
       

@@ -33,13 +33,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 let loadingInterval: number | undefined;
 
 // Shared quiz logic (species filtering, stats, correctness checking)
-const speciesOptions = computed<SpeciesFilterOptions>(() => ({
-  generation: props.settings.generation,
-  minGeneration: props.settings.minGeneration,
-  maxGeneration: props.settings.maxGeneration,
-  fullyEvolvedOnly: props.settings.fullyEvolvedOnly,
-  includeMegaPokemon: props.settings.includeMegaPokemon,
-}));
+const speciesOptions = computed<SpeciesFilterOptions>(() => props.settings);
 
 const {
   speciesSelection,

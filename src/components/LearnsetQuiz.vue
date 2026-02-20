@@ -37,14 +37,12 @@ let timerInterval: ReturnType<typeof setInterval> | null = null
 let loadingInterval: number | undefined
 
 // Shared quiz logic
-const speciesOptions = computed<SpeciesFilterOptions>(() => ({
-  generation: props.settings.generation,
-  minGeneration: props.settings.minGeneration,
-  maxGeneration: props.settings.maxGeneration,
-  fullyEvolvedOnly: props.settings.fullyEvolvedOnly,
-  includeMegaPokemon: props.settings.includeMegaPokemon,
-  baseFormeOnly: true,
-}))
+const speciesOptions = computed<SpeciesFilterOptions>(() => {
+  return {
+    ...props.settings,
+    baseFormeOnly: true, // Learnset quiz should only use base species for guessing, but still consider evolutions for learnset generation
+  }
+})
 
 const generation = computed<GenerationNum>(() => props.settings.generation as GenerationNum)
 

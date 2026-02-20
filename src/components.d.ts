@@ -11,6 +11,10 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Accordion: typeof import('./components/ui/accordion/Accordion.vue')['default']
+    AccordionContent: typeof import('./components/ui/accordion/AccordionContent.vue')['default']
+    AccordionItem: typeof import('./components/ui/accordion/AccordionItem.vue')['default']
+    AccordionTrigger: typeof import('./components/ui/accordion/AccordionTrigger.vue')['default']
     AppSidebar: typeof import('./components/AppSidebar.vue')['default']
     BaseStatQuiz: typeof import('./components/BaseStatQuiz.vue')['default']
     Button: typeof import('./components/ui/button/Button.vue')['default']

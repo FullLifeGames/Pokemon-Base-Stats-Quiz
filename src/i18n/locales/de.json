@@ -36,7 +36,11 @@
   "loading": "Nächstes Pokémon wird geladen...",
   "close": "Schließen",
   "sidebar": {
+    "home": "Startseite",
+    "vsMode": "VS-Modus (Mehrspieler)",
     "settings": "Einstellungen",
+    "pokemonFilters": "Pokémon-Filter",
+    "quizSettings": "Quiz-Einstellungen",
     "generation": "Ziel-Generation",
     "minGeneration": "Minimale Generation",
     "maxGeneration": "Maximale Generation",
@@ -44,6 +48,7 @@
     "includeMegaPokemon": "Mega-Entwicklungen einbeziehen",
     "maxScore": "Gewinn-Score",
     "hintsEnabled": "Hinweise aktivieren",
+    "vgcMode": "VGC-Modus (Doppelkämpfe, Level 50)",
     "madeBy": "Erstellt von",
     "english": "English",
     "deutsch": "Deutsch",
@@ -58,6 +63,8 @@
   "requestSecondHint": "Zweiten Hinweis anfordern",
   "hints": {
     "firstHint": "Typen",
+    "damageRange": "Schadensbereich",
+    "koIndicator": "KO-Indikator",
     "secondHint": "Fähigkeiten"
   },
   "congratulations": {
@@ -156,6 +163,8 @@
   },
   "damage": {
     "title": "Schadens-Quiz",
+    "titleVgc": "VGC-Schadens-Quiz",
+    "titleSingles": "Einzel-Schadens-Quiz",
     "explanation": "Schätze den Schadensprozentsatz (±{tolerance}% Toleranz).",
     "vsExplanation": "Schätze den Schadensprozentsatz (±{tolerance}% Toleranz) dieser Attacke!",
     "attacker": "Angreifer",
@@ -165,8 +174,23 @@
     "nature": "Wesen",
     "evs": "EVs",
     "teraType": "Tera-Typ",
+    "level": "Lv. {level}",
     "actualDamage": "Tatsächlicher Schaden",
     "average": "Ø",
+    "activeEffects": "Aktive Feldeffekte",
+    "weather": {
+      "sun": "Sonnenschein",
+      "rain": "Regen",
+      "sand": "Sandsturm",
+      "snow": "Schnee",
+      "hail": "Hagel"
+    },
+    "terrain": {
+      "grassy": "Grasfeld",
+      "electric": "Elektrofeld",
+      "psychic": "Psychofeld",
+      "misty": "Nebelfeld"
+    },
     "guessPrompt": "Wie viel % Schaden macht diese Attacke?",
     "guessPlaceholder": "z.B. 45",
     "submit": "Absenden",

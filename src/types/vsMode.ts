@@ -135,6 +135,7 @@ export const defaultVsRoomSettings: VsRoomSettings = {
   maxGeneration: 9,
   fullyEvolvedOnly: true,
   includeMegaPokemon: false,
+  vgc: false,
   maxScore: 5,
   hintsEnabled: true,
   quizMode: 'base-stat',

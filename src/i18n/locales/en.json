@@ -36,7 +36,11 @@
   "loading": "Loading next Pokémon...",
   "close": "Close",
   "sidebar": {
+    "home": "Home",
+    "vsMode": "VS Mode (Multiplayer)",
     "settings": "Settings",
+    "pokemonFilters": "Pokémon Filters",
+    "quizSettings": "Quiz Settings",
     "generation": "Target Generation",
     "minGeneration": "Minimum Generation",
     "maxGeneration": "Maximum Generation",
@@ -44,6 +48,7 @@
     "includeMegaPokemon": "Include Mega Evolutions",
     "maxScore": "Win Score",
     "hintsEnabled": "Enable Hints",
+    "vgcMode": "VGC Mode (Doubles, Level 50)",
     "madeBy": "Made by",
     "english": "English",
     "deutsch": "Deutsch",
@@ -58,7 +63,9 @@
   "requestSecondHint": "Request Second Hint",
   "hints": {
     "firstHint": "Types",
-    "secondHint": "Abilities"
+    "secondHint": "Abilities",
+    "damageRange": "Damage Range",
+    "koIndicator": "KO Indicator"
   },
   "congratulations": {
     "title": "Congratulations!",
@@ -156,6 +163,8 @@
   },
   "damage": {
     "title": "Damage Quiz",
+    "titleVgc": "VGC Damage Quiz",
+    "titleSingles": "Singles Damage Quiz",
     "explanation": "Guess the damage percentage (±{tolerance}% tolerance).",
     "vsExplanation": "Guess the damage percentage (±{tolerance}% tolerance) this move deals!",
     "attacker": "Attacker",
@@ -165,8 +174,23 @@
     "nature": "Nature",
     "evs": "EVs",
     "teraType": "Tera Type",
+    "level": "Lv. {level}",
     "actualDamage": "Actual Damage",
     "average": "avg",
+    "activeEffects": "Active Field Effects",
+    "weather": {
+      "sun": "Sunlight",
+      "rain": "Rain",
+      "sand": "Sandstorm",
+      "snow": "Snow",
+      "hail": "Hail"
+    },
+    "terrain": {
+      "grassy": "Grassy Terrain",
+      "electric": "Electric Terrain",
+      "psychic": "Psychic Terrain",
+      "misty": "Misty Terrain"
+    },
     "guessPrompt": "How much % damage does this move deal?",
     "guessPlaceholder": "e.g. 45",
     "submit": "Submit",

@@ -4,6 +4,12 @@ import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import GenerationSelect from './GenerationSelect.vue'
 import { Copy, Users, Eye, ArrowLeft, Loader2 } from 'lucide-vue-next'
 import type { VsRoomSettings, VsPlayer, GameMode } from '@/types/vsMode'
@@ -119,8 +125,8 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
 
           <Separator />
 
-          <!-- Settings -->
-          <div class="space-y-4">
+            <!-- Settings -->
+            <div class="space-y-4">
             <h3 class="text-sm font-semibold">{{ t('sidebar.settings') }}</h3>
 
             <!-- Quiz Mode (what kind of quiz) -->
@@ -198,54 +204,112 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
               <p class="text-xs text-muted-foreground">{{ t('vs.timeLimitDesc') }}</p>
             </div>
 
-            <!-- Fully Evolved Only -->
-            <div class="flex items-center gap-2">
-              <input
-                type="checkbox"
-                :checked="settings.fullyEvolvedOnly"
-                @change="(e) => updateSetting('fullyEvolvedOnly', (e.target as HTMLInputElement).checked)"
-                class="w-4 h-4 rounded border border-input cursor-pointer"
-                id="vsFullyEvolved"
-              />
-              <label for="vsFullyEvolved" class="text-sm cursor-pointer">
-                {{ t('sidebar.fullyEvolvedOnly') }}
-              </label>
-            </div>
-            
-            <!-- Include Mega Pokémon -->
-            <div class="flex items-center gap-2">
-              <input
-                type="checkbox"
-                :checked="settings.includeMegaPokemon"
-                @change="(e) => updateSetting('includeMegaPokemon', (e.target as HTMLInputElement).checked)"
-                class="w-4 h-4 rounded border border-input cursor-pointer"
-                id="vsIncludeMegaPokemon"
-              />
-              <label for="vsIncludeMegaPokemon" class="text-sm cursor-pointer">
-                {{ t('sidebar.includeMegaPokemon') }}
-              </label>
-            </div>
+            <!-- Collapsible filter & quiz settings -->
+            <Accordion type="multiple" class="w-full" :default-value="['quiz']">
+              <AccordionItem value="filters">
+                <AccordionTrigger class="text-sm font-medium py-2 hover:no-underline cursor-pointer">
+                  {{ t('sidebar.pokemonFilters') }}
+                </AccordionTrigger>
+                <AccordionContent class="space-y-3 pt-2">
+                  <!-- Fully Evolved Only -->
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      :checked="settings.fullyEvolvedOnly"
+                      @change="(e) => updateSetting('fullyEvolvedOnly', (e.target as HTMLInputElement).checked)"
+                      class="w-4 h-4 rounded border border-input cursor-pointer"
+                      id="vsFullyEvolved"
+                    />
+                    <label for="vsFullyEvolved" class="text-sm cursor-pointer">
+                      {{ t('sidebar.fullyEvolvedOnly') }}
+                    </label>
+                  </div>
 
-            <!-- Min Generation -->
-            <GenerationSelect
-              :model-value="settings.minGeneration"
-              @update:model-value="(val) => updateSetting('minGeneration', val)"
-              :label="t('sidebar.minGeneration')"
-            />
+                  <!-- Include Mega Pokémon -->
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      :checked="settings.includeMegaPokemon"
+                      @change="(e) => updateSetting('includeMegaPokemon', (e.target as HTMLInputElement).checked)"
+                      class="w-4 h-4 rounded border border-input cursor-pointer"
+                      id="vsIncludeMegaPokemon"
+                    />
+                    <label for="vsIncludeMegaPokemon" class="text-sm cursor-pointer">
+                      {{ t('sidebar.includeMegaPokemon') }}
+                    </label>
+                  </div>
 
-            <!-- Max Generation -->
-            <GenerationSelect
-              :model-value="settings.maxGeneration"
-              @update:model-value="(val) => updateSetting('maxGeneration', val)"
-              :label="t('sidebar.maxGeneration')"
-            />
+                  <!-- Generation selects -->
+                  <GenerationSelect
+                    :model-value="settings.generation"
+                    @update:model-value="(val) => updateSetting('generation', val)"
+                    :label="t('sidebar.generation')"
+                  />
 
-            <!-- Generation -->
-            <GenerationSelect
-              :model-value="settings.generation"
-              @update:model-value="(val) => updateSetting('generation', val)"
-              :label="t('sidebar.generation')"
-            />
+                  <GenerationSelect
+                    :model-value="settings.minGeneration"
+                    @update:model-value="(val) => updateSetting('minGeneration', val)"
+                    :label="t('sidebar.minGeneration')"
+                  />
+
+                  <GenerationSelect
+                    :model-value="settings.maxGeneration"
+                    @update:model-value="(val) => updateSetting('maxGeneration', val)"
+                    :label="t('sidebar.maxGeneration')"
+                  />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="quiz">
+                <AccordionTrigger class="text-sm font-medium py-2 hover:no-underline cursor-pointer">
+                  {{ t('sidebar.quizSettings') }}
+                </AccordionTrigger>
+                <AccordionContent class="space-y-3 pt-2">
+                  <!-- Max Score -->
+                  <div class="flex flex-col gap-2">
+                    <label for="maxScoreInput" class="text-sm font-medium">
+                      {{ t('sidebar.maxScore') }}
+                    </label>
+                    <Input
+                      id="maxScoreInput"
+                      type="number"
+                      :model-value="settings.maxScore"
+                      @update:model-value="(val) => updateSetting('maxScore', Math.max(1, typeof val === 'number' ? val : parseInt(val as string) || 1))"
+                      min="1"
+                      max="999"
+                    />
+                  </div>
+
+                  <!-- Hints Enabled -->
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      :checked="settings.hintsEnabled"
+                      @change="(e) => updateSetting('hintsEnabled', (e.target as HTMLInputElement).checked)"
+                      class="w-4 h-4 rounded border border-input cursor-pointer"
+                      id="vsHintsEnabled"
+                    />
+                    <label for="vsHintsEnabled" class="text-sm cursor-pointer">
+                      {{ t('sidebar.hintsEnabled') }}
+                    </label>
+                  </div>
+
+                  <!-- VGC Mode (only for Damage Quiz) -->
+                  <div v-if="settings.quizMode === 'damage'" class="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      :checked="settings.vgc"
+                      @change="(e) => updateSetting('vgc', (e.target as HTMLInputElement).checked)"
+                      class="w-4 h-4 rounded border border-input cursor-pointer"
+                      id="vsVgcMode"
+                    />
+                    <label for="vsVgcMode" class="text-sm cursor-pointer">
+                      {{ t('sidebar.vgcMode') }}
+                    </label>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
 
           <Button class="w-full cursor-pointer" @click="emit('create-room')">

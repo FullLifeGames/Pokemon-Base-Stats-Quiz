@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { X } from 'lucide-vue-next'
+import { X, LightbulbIcon } from 'lucide-vue-next'
 import { computed, ref, watch, onMounted } from 'vue'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useI18n } from 'vue-i18n'
-import { useDamageCalc, type DamageScenario } from '@/composables/useDamageCalc'
+import { useDamageCalc, MAX_DAMAGE_PERCENT, type DamageScenario } from '@/composables/useDamageCalc'
 import DamageScenarioDisplay from '@/components/DamageScenarioDisplay.vue'
 import type { QuizSettings } from '@/types/settings'
 import type { GenerationNum } from '@pkmn/dex'
@@ -30,19 +30,14 @@ const showCongratulations = ref(false)
 const showExplanation = ref(true)
 const hasAnswered = ref(false)
 const guessValue = ref([50])
+const hintLevel = ref(0) // 0 = no hints, 1 = damage range, 2 = OHKO/2HKO indicator
 const resultMessageRef = ref<HTMLDivElement | null>(null)
 let timerInterval: ReturnType<typeof setInterval> | null = null
 let loadingInterval: number | undefined
 
 const generation = computed<GenerationNum>(() => props.settings.generation as GenerationNum)
 
-const filterOptions = computed(() => ({
-  generation: props.settings.generation,
-  minGeneration: props.settings.minGeneration,
-  maxGeneration: props.settings.maxGeneration,
-  fullyEvolvedOnly: props.settings.fullyEvolvedOnly,
-  includeMegaPokemon: props.settings.includeMegaPokemon,
-}))
+const filterOptions = computed(() => props.settings)
 
 const { generateDamageScenario, isDamageGuessCorrect, waitUntilReady } = useDamageCalc(generation, filterOptions)
 
@@ -57,6 +52,7 @@ const resetQuiz = async () => {
   generateNewScenario()
   guessValue.value = [50]
   hasAnswered.value = false
+  hintLevel.value = 0
   progressValue.value = 0
   clearInterval(loadingInterval)
   correctGuesses.value = 0
@@ -107,6 +103,29 @@ const isCorrect = computed(() => {
   return isDamageGuessCorrect(guess, currentScenario.value.damagePercent, TOLERANCE)
 })
 
+// Hint 1: Damage range (eliminate parts of the slider)
+const damageRangeHint = computed(() => {
+  if (!currentScenario.value) return null
+  const actual = currentScenario.value.damagePercent
+  const third = MAX_DAMAGE_PERCENT / 3
+  
+  // Divide slider into 3 broad ranges
+  if (actual < third) return `0-${Math.round(third)}%`
+  if (actual < third * 2) return `${Math.round(third)}-${Math.round(third * 2)}%`
+  return `${Math.round(third * 2)}-${MAX_DAMAGE_PERCENT}%`
+})
+
+// Hint 2: OHKO/2HKO/3HKO indicator
+const koIndicator = computed(() => {
+  if (!currentScenario.value) return null
+  const damage = currentScenario.value.damagePercent
+  if (damage >= 100) return 'OHKO (One-Hit Knockout)'
+  if (damage >= 50) return '2HKO (Two-Hit Knockout)'
+  if (damage >= 33.4) return '3HKO (Three-Hit Knockout)'
+  if (damage >= 25) return '4HKO (Four-Hit Knockout)'
+  return '5+HKO (Five or More Hits to Knockout)'
+})
+
 // Start on mount
 onMounted(async () => {
   await waitUntilReady()
@@ -118,6 +137,7 @@ const nextScenario = () => {
   generateNewScenario()
   guessValue.value = [50]
   hasAnswered.value = false
+  hintLevel.value = 0
   progressValue.value = 0
   startTimer()
 }
@@ -164,7 +184,7 @@ function submitGuess() {
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-semibold">
-            {{ t('damage.title') }}
+            {{ settings.vgc ? t('damage.titleVgc') : t('damage.titleSingles') }}
           </h1>
           <div class="flex gap-6 mt-2 text-sm md:text-base flex-wrap items-center">
             <span class="text-green-600 dark:text-green-400 font-semibold">
@@ -206,7 +226,44 @@ function submitGuess() {
       <!-- Main layout -->
       <div v-else class="flex flex-col gap-4 md:gap-6 flex-1">
         <!-- Damage Scenario Display -->
-        <DamageScenarioDisplay :scenario="currentScenario" :show-answer="hasAnswered" />
+        <DamageScenarioDisplay 
+          :scenario="currentScenario" 
+          :show-answer="hasAnswered"
+          :level="settings.vgc ? 50 : 100"
+          :generation="generation"
+        />
+
+        <!-- Hint Section -->
+        <div v-if="settings.hintsEnabled && !hasAnswered" class="flex flex-col gap-4">
+          <Button
+            v-if="hintLevel < 2"
+            variant="outline"
+            class="cursor-pointer w-full md:w-auto mx-auto"
+            @click="hintLevel++"
+          >
+            <LightbulbIcon class="mr-2 h-4 w-4" />
+            {{ hintLevel === 0 ? t('requestHint') : t('requestSecondHint') }}
+          </Button>
+          
+          <div v-if="hintLevel >= 1" class="bg-yellow-50 dark:bg-yellow-950 text-yellow-900 dark:text-yellow-100 px-3 md:px-4 py-2 md:py-3 rounded-lg text-xs md:text-sm">
+            <div class="flex flex-col gap-1.5 md:gap-2">
+              <div class="flex items-center gap-1.5 md:gap-2">
+                <LightbulbIcon class="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+                <div>
+                  <strong>{{ t('hints.damageRange') }}:</strong>
+                  <span class="ml-1 md:ml-2">{{ damageRangeHint }}</span>
+                </div>
+              </div>
+              <div v-if="hintLevel >= 2" class="flex items-center gap-1.5 md:gap-2">
+                <LightbulbIcon class="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+                <div>
+                  <strong>{{ t('hints.koIndicator') }}:</strong>
+                  <span class="ml-1 md:ml-2">{{ koIndicator }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Guess Input -->
         <div class="flex flex-col items-center gap-4 max-w-lg mx-auto w-full">
@@ -220,14 +277,14 @@ function submitGuess() {
             <Slider
               v-model="guessValue"
               :min="0"
-              :max="200"
+              :max="MAX_DAMAGE_PERCENT"
               :step="1"
               :disabled="hasAnswered"
               class="w-full"
             />
             <div class="flex justify-between text-xs text-muted-foreground">
               <span>0%</span>
-              <span>200%</span>
+              <span>{{ MAX_DAMAGE_PERCENT }}%</span>
             </div>
           </div>
           <Button

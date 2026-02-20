@@ -27,4 +27,5 @@ export const defaultSettings: QuizSettings = {
   maxScore: 10,
   hintsEnabled: true,
   quizMode: 'base-stat',
+  vgc: false,
 }

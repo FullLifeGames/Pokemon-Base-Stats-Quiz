@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { DamageScenario } from '@/composables/useDamageCalc'
+import type { GenerationNum } from '@pkmn/dex'
+import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue'
 
 const { t } = useI18n()
 
@@ -8,6 +10,10 @@ const props = defineProps<{
   scenario: DamageScenario | null
   /** Whether to reveal the actual damage (after answer). */
   showAnswer?: boolean
+  /** Level of Pokémon (50 for VGC, 100 otherwise). */
+  level?: number
+  /** Generation for sprite rendering. */
+  generation?: GenerationNum
 }>()
 
 function formatEvs(evs?: Record<string, number | undefined>): string {
@@ -20,10 +26,48 @@ function formatEvs(evs?: Record<string, number | undefined>): string {
     .map(([k, v]) => `${v} ${statNames[k] || k}`)
     .join(' / ')
 }
+
+function getWeatherIcon(weather: string): string {
+  const icons: Record<string, string> = {
+    Sun: '☀️',
+    Rain: '🌧️',
+    Sand: '🌪️',
+    Snow: '❄️',
+    Hail: '🧊',
+  }
+  return icons[weather] || '🌤️'
+}
+
+function getTerrainIcon(terrain: string): string {
+  const icons: Record<string, string> = {
+    Grassy: '🌿',
+    Electric: '⚡',
+    Psychic: '🔮',
+    Misty: '🌸',
+  }
+  return icons[terrain] || '🗺️'
+}
 </script>
 
 <template>
   <div v-if="scenario" class="flex flex-col gap-3 md:gap-4">
+    <!-- Active Field Effects -->
+    <div v-if="scenario.fieldEffects && (scenario.fieldEffects.weather || scenario.fieldEffects.terrain)" class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30 p-2.5 md:p-3">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-[10px] md:text-xs font-bold uppercase text-amber-600 dark:text-amber-400">
+          {{ t('damage.activeEffects') }}:
+        </span>
+        <div class="flex gap-2 flex-wrap">
+          <span v-if="scenario.fieldEffects.weather" class="text-xs md:text-sm font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300">
+            {{ getWeatherIcon(scenario.fieldEffects.weather) }} {{ t(`damage.weather.${scenario.fieldEffects.weather.toLowerCase()}`) }}
+          </span>
+          <span v-if="scenario.fieldEffects.terrain" class="text-xs md:text-sm font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300">
+            {{ getTerrainIcon(scenario.fieldEffects.terrain) }} {{ t(`damage.terrain.${scenario.fieldEffects.terrain.toLowerCase()}`) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <!-- VS layout -->
     <div class="grid grid-cols-[1fr_auto_1fr] items-start gap-2 md:gap-4">
       <!-- Attacker -->
@@ -33,8 +77,16 @@ function formatEvs(evs?: Record<string, number | undefined>): string {
             {{ t('damage.attacker') }}
           </span>
         </div>
-        <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ scenario.attackerName }}</h3>
-        <p class="text-[10px] md:text-xs text-muted-foreground italic mb-1.5">{{ scenario.attackerSetName }}</p>
+        <div class="flex items-start gap-2 mb-2">
+          <div class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center shrink-0">
+            <SpritesRenderer v-if="generation" class="max-w-full max-h-full" :generation="generation" :name="scenario.attackerName" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ scenario.attackerName }}</h3>
+            <p class="text-[10px] md:text-xs text-muted-foreground italic">{{ scenario.attackerSetName }}</p>
+            <p v-if="level" class="text-[10px] md:text-xs font-semibold text-red-600 dark:text-red-400">{{ t('damage.level', { level }) }}</p>
+          </div>
+        </div>
         <div class="text-[10px] md:text-xs space-y-0.5 text-muted-foreground">
           <div v-if="scenario.attackerSet.ability"><strong>{{ t('damage.ability') }}:</strong> {{ scenario.attackerSet.ability }}</div>
           <div v-if="scenario.attackerSet.item"><strong>{{ t('damage.item') }}:</strong> {{ scenario.attackerSet.item }}</div>
@@ -62,8 +114,16 @@ function formatEvs(evs?: Record<string, number | undefined>): string {
             {{ t('damage.defender') }}
           </span>
         </div>
-        <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ scenario.defenderName }}</h3>
-        <p class="text-[10px] md:text-xs text-muted-foreground italic mb-1.5">{{ scenario.defenderSetName }}</p>
+        <div class="flex items-start gap-2 mb-2">
+          <div class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center shrink-0">
+            <SpritesRenderer v-if="generation" class="max-w-full max-h-full" :generation="generation" :name="scenario.defenderName" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ scenario.defenderName }}</h3>
+            <p class="text-[10px] md:text-xs text-muted-foreground italic">{{ scenario.defenderSetName }}</p>
+            <p v-if="level" class="text-[10px] md:text-xs font-semibold text-blue-600 dark:text-blue-400">{{ t('damage.level', { level }) }}</p>
+          </div>
+        </div>
         <div class="text-[10px] md:text-xs space-y-0.5 text-muted-foreground">
           <div v-if="scenario.defenderSet.ability"><strong>{{ t('damage.ability') }}:</strong> {{ scenario.defenderSet.ability }}</div>
           <div v-if="scenario.defenderSet.item"><strong>{{ t('damage.item') }}:</strong> {{ scenario.defenderSet.item }}</div>

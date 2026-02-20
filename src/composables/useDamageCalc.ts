@@ -4,9 +4,15 @@ import {
   Generations,
   Pokemon,
   Move,
+  Field,
 } from '@smogon/calc'
 import { Dex, type GenerationNum } from '@pkmn/dex'
 import type { SpeciesFilterOptions } from '@/composables/useQuizLogic'
+
+/**
+ * Maximum damage percentage for UI sliders and scenario filtering.
+ */
+export const MAX_DAMAGE_PERCENT = 110
 
 /**
  * Shape of a single set from the setdex JSON.
@@ -53,6 +59,12 @@ async function loadSetdex(gen: number): Promise<Setdex> {
   return setdex
 }
 
+/** Active field effects that modify battle calculations. */
+export interface FieldEffects {
+  weather?: 'Sun' | 'Rain' | 'Sand' | 'Snow' | 'Hail'
+  terrain?: 'Grassy' | 'Electric' | 'Psychic' | 'Misty'
+}
+
 /** Scenario generated for a damage quiz question. */
 export interface DamageScenario {
   attackerName: string
@@ -66,6 +78,8 @@ export interface DamageScenario {
   damagePercent: number
   /** Min/max damage as % of defender HP. */
   damageRange: [number, number]
+  /** Active field effects triggered by Pokémon abilities. */
+  fieldEffects?: FieldEffects
 }
 
 /**
@@ -84,6 +98,59 @@ function toStatSpread(evs?: SetdexSet['evs']): Record<string, number> {
 }
 
 /**
+ * Map abilities to the field effects they trigger.
+ */
+function getFieldEffectsFromAbility(ability?: string): FieldEffects {
+  if (!ability) return {}
+  
+  const weatherAbilities: Record<string, FieldEffects['weather']> = {
+    'Drought': 'Sun',
+    'Drizzle': 'Rain',
+    'Sand Stream': 'Sand',
+    'Snow Warning': 'Snow',
+    'Orichalcum Pulse': 'Sun',
+    'Hadron Engine': 'Electric' as any, // This is actually terrain
+    'Desolate Land': 'Sun',
+    'Primordial Sea': 'Rain',
+  }
+  
+  const terrainAbilities: Record<string, FieldEffects['terrain']> = {
+    'Grassy Surge': 'Grassy',
+    'Electric Surge': 'Electric',
+    'Psychic Surge': 'Psychic',
+    'Misty Surge': 'Misty',
+  }
+  
+  const effects: FieldEffects = {}
+  
+  if (weatherAbilities[ability]) {
+    effects.weather = weatherAbilities[ability]
+  }
+  
+  if (terrainAbilities[ability]) {
+    effects.terrain = terrainAbilities[ability]
+  }
+  
+  // Special case: Hadron Engine sets Electric Terrain
+  if (ability === 'Hadron Engine') {
+    effects.weather = undefined
+    effects.terrain = 'Electric'
+  }
+  
+  return effects
+}
+
+/**
+ * Combine field effects from attacker and defender, giving defender precedence.
+ */
+function mergeFieldEffects(attackerEffects: FieldEffects, defenderEffects: FieldEffects): FieldEffects {
+  return {
+    weather: defenderEffects.weather ?? attackerEffects.weather,
+    terrain: defenderEffects.terrain ?? attackerEffects.terrain,
+  }
+}
+
+/**
  * Composable for damage calculation using @smogon/calc.
  *
  * - `generateDamageScenario()` → random matchup with calculated damage %
@@ -98,6 +165,9 @@ export function useDamageCalc(
 ) {
   // Use the actual generation for @smogon/calc
   const gen = computed(() => Generations.get(generation.value))
+
+  // Level for calculation the damage
+  const level = computed(() => filterOptions?.value.vgc ? 50 : 100)
 
   // Reactive setdex that updates when generation changes
   const currentSetdex = ref<Setdex>({})
@@ -156,12 +226,38 @@ export function useDamageCalc(
   /** Non-standard metagame set name prefixes to exclude. */
   const EXCLUDED_SET_PREFIXES = ['Balanced Hackmons', 'Almost Any Ability']
 
+  /** VGC or Doubles metagame set name prefixes to include/exclude. */
+  const DOUBLES_SET_PREFIXES = ['Doubles', 'VGC']
+
   /** Filter out non-standard metagame sets from a Pokémon's set entries. */
   function filterStandardSets(setEntries: [string, SetdexSet][]): [string, SetdexSet][] {
-    return setEntries.filter(
+    let filteredEntries = setEntries.filter(
       ([name]) => !EXCLUDED_SET_PREFIXES.some(prefix => name.startsWith(prefix)),
-    )
+    );
+    if (filterOptions?.value.vgc) {
+      filteredEntries = filteredEntries.filter(
+        ([name]) => DOUBLES_SET_PREFIXES.some(prefix => name.startsWith(prefix)),
+      )
+    } else {
+      filteredEntries = filteredEntries.filter(
+        ([name]) => !DOUBLES_SET_PREFIXES.some(prefix => name.startsWith(prefix)),
+      )
+    }
+    return filteredEntries
   }
+
+  /**
+   * Pre-filtered Pokémon pool with only standard sets (based on VGC setting).
+   * Each entry is guaranteed to have at least one valid set.
+   */
+  const pokemonWithFilteredSets = computed(() => {
+    return pokemonWithSets.value
+      .map(([name, sets]) => {
+        const filteredSets = filterStandardSets(Object.entries(sets))
+        return [name, Object.fromEntries(filteredSets)] as [string, Record<string, SetdexSet>]
+      })
+      .filter(([, sets]) => Object.keys(sets).length > 0)
+  })
 
   /**
    * Pick a random entry from an array.
@@ -176,16 +272,14 @@ export function useDamageCalc(
    * Ensures the move deals at least some damage.
    */
   function generateDamageScenario(maxAttempts = 50): DamageScenario | null {
-    const pool = pokemonWithSets.value
+    const pool = pokemonWithFilteredSets.value
     if (pool.length < 2) return null
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         // Pick random attacker
         const [atkName, atkSets] = randomPick(pool)
-        const atkSetEntries = filterStandardSets(Object.entries(atkSets))
-        if (atkSetEntries.length === 0) continue
-        const [atkSetName, atkSet] = randomPick(atkSetEntries)
+        const [atkSetName, atkSet] = randomPick(Object.entries(atkSets))
 
         // Pick a random move from the attacker's set
         const moveName = randomPick(atkSet.moves)
@@ -198,13 +292,11 @@ export function useDamageCalc(
           retries++
         }
         const [defName, defSets] = defEntry
-        const defSetEntries = filterStandardSets(Object.entries(defSets))
-        if (defSetEntries.length === 0) continue
-        const [defSetName, defSet] = randomPick(defSetEntries)
+        const [defSetName, defSet] = randomPick(Object.entries(defSets))
 
         // Build @smogon/calc objects
         const attacker = new Pokemon(gen.value, atkName, {
-          level: 100,
+          level: level.value,
           item: atkSet.item,
           nature: atkSet.nature,
           ability: atkSet.ability,
@@ -213,7 +305,7 @@ export function useDamageCalc(
         })
 
         const defender = new Pokemon(gen.value, defName, {
-          level: 100,
+          level: level.value,
           item: defSet.item,
           nature: defSet.nature,
           ability: defSet.ability,
@@ -223,7 +315,18 @@ export function useDamageCalc(
 
         const move = new Move(gen.value, moveName)
 
-        const result = calculate(gen.value, attacker, defender, move)
+        // Detect field effects from abilities (defender takes precedence)
+        const attackerFieldEffects = getFieldEffectsFromAbility(atkSet.ability)
+        const defenderFieldEffects = getFieldEffectsFromAbility(defSet.ability)
+        const activeFieldEffects = mergeFieldEffects(attackerFieldEffects, defenderFieldEffects)
+
+        const field = new Field({
+          gameType: filterOptions?.value.vgc ? 'Doubles' : 'Singles',
+          weather: activeFieldEffects.weather,
+          terrain: activeFieldEffects.terrain,
+        })
+
+        const result = calculate(gen.value, attacker, defender, move, field)
 
         // Get damage range
         const range = result.range()
@@ -236,8 +339,13 @@ export function useDamageCalc(
         const maxPct = (range[1] / defHP) * 100
         const avgPct = (minPct + maxPct) / 2
 
-        // Skip extremely high damage (>200%) or extremely low (<1%)
-        if (avgPct < 1 || avgPct > 200) continue
+        // Skip extremely high damage (>MAX_DAMAGE_PERCENT) or extremely low (<1%)
+        if (avgPct < 1 || avgPct > MAX_DAMAGE_PERCENT) continue
+
+        // Prepare field effects for display (only include if they exist)
+        const scenarioFieldEffects: FieldEffects = {}
+        if (activeFieldEffects.weather) scenarioFieldEffects.weather = activeFieldEffects.weather
+        if (activeFieldEffects.terrain) scenarioFieldEffects.terrain = activeFieldEffects.terrain
 
         return {
           attackerName: atkName,
@@ -252,6 +360,7 @@ export function useDamageCalc(
             Math.round(minPct * 10) / 10,
             Math.round(maxPct * 10) / 10,
           ],
+          fieldEffects: Object.keys(scenarioFieldEffects).length > 0 ? scenarioFieldEffects : undefined,
         }
       } catch {
         // Some sets may reference invalid Pokémon/moves — skip

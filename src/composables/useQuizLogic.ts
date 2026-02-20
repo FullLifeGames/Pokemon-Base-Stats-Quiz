@@ -13,6 +13,7 @@ export interface SpeciesFilterOptions {
   fullyEvolvedOnly: boolean
   includeMegaPokemon: boolean
   baseFormeOnly?: boolean
+  vgc?: boolean
 }
 
 /**

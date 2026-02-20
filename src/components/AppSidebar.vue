@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { Globe } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import type { QuizSettings } from '@/types/settings'
@@ -24,9 +25,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import ModeToggle from './ModeToggle.vue'
 
 const { locale, t } = useI18n()
+const router = useRouter()
 
 const props = defineProps({
   settings: {
@@ -74,8 +82,23 @@ const updateHintsEnabled = (value: boolean) => {
   emit('update:settings', { ...props.settings, hintsEnabled: value })
 }
 
+const updateVgc = (value: boolean) => {
+  emit('update:settings', { ...props.settings, vgc: value })
+  // Navigate to appropriate route if in damage mode
+  if (props.settings.quizMode === 'damage') {
+    router.push(value ? '/solo/damage/vgc' : '/solo/damage')
+  }
+}
+
 const updateQuizMode = (mode: QuizMode) => {
   emit('update:settings', { ...props.settings, quizMode: mode })
+  // Navigate to the appropriate route
+  const routeMap: Record<QuizMode, string> = {
+    'base-stat': '/solo/base-stats',
+    'learnset': '/solo/learnset',
+    'damage': props.settings.vgc ? '/solo/damage/vgc' : '/solo/damage',
+  }
+  router.push(routeMap[mode])
 }
 
 const quizModes: { value: QuizMode; labelKey: string }[] = [
@@ -95,7 +118,14 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
             <SidebarMenuItem>
               <SidebarMenuButton as-child>
                 <a href="#">
-                  <span>{{ locale === 'en' ? 'Home' : 'Startseite' }}</span>
+                  <span>{{ t('sidebar.home') }}</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton as-child>
+                <a href="#/vs">
+                  <span>{{ t('sidebar.vsMode') }}</span>
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -107,8 +137,8 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <div class="px-2 py-2 text-sm space-y-4">
-                <!-- Quiz Mode Selector -->
+              <div class="px-2 py-2 text-sm space-y-3">
+                <!-- Quiz Mode Selector (Always Visible) -->
                 <div class="flex flex-col gap-2">
                   <label class="text-sm font-medium">{{ t('sidebar.quizMode') }}</label>
                   <div class="flex flex-col gap-1">
@@ -126,83 +156,114 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
                   </div>
                 </div>
 
-                <!-- Fully Evolved Only Checkbox (First) -->
-                <div class="flex items-center gap-2">
-                  <input 
-                    type="checkbox" 
-                    :checked="settings.fullyEvolvedOnly" 
-                    @change="(e) => updateFullyEvolvedOnly((e.target as HTMLInputElement).checked)"
-                    class="w-4 h-4 rounded border border-input cursor-pointer"
-                    id="fullyEvolvedCheckbox"
-                  />
-                  <label for="fullyEvolvedCheckbox" class="text-sm font-medium cursor-pointer">
-                    {{ t('sidebar.fullyEvolvedOnly') }}
-                  </label>
-                </div>
+                <!-- Collapsible Settings Sections -->
+                <Accordion type="multiple" class="w-full" :default-value="['quiz']">
+                  <!-- Pokémon Filters Section -->
+                  <AccordionItem value="filters">
+                    <AccordionTrigger class="text-sm font-medium py-2 hover:no-underline cursor-pointer">
+                      {{ t('sidebar.pokemonFilters') }}
+                    </AccordionTrigger>
+                    <AccordionContent class="space-y-3 pt-2">
+                      <!-- Fully Evolved Only -->
+                      <div class="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          :checked="settings.fullyEvolvedOnly" 
+                          @change="(e) => updateFullyEvolvedOnly((e.target as HTMLInputElement).checked)"
+                          class="w-4 h-4 rounded border border-input cursor-pointer"
+                          id="fullyEvolvedCheckbox"
+                        />
+                        <label for="fullyEvolvedCheckbox" class="text-sm cursor-pointer">
+                          {{ t('sidebar.fullyEvolvedOnly') }}
+                        </label>
+                      </div>
 
-                <!-- Include Mega Pokémon Checkbox (Second) -->
-                <div class="flex items-center gap-2">
-                  <input 
-                    type="checkbox" 
-                    :checked="settings.includeMegaPokemon" 
-                    @change="(e) => updateIncludeMegaPokemon((e.target as HTMLInputElement).checked)"
-                    class="w-4 h-4 rounded border border-input cursor-pointer"
-                    id="includeMegaPokemonCheckbox"
-                  />
-                  <label for="includeMegaPokemonCheckbox" class="text-sm font-medium cursor-pointer">
-                    {{ t('sidebar.includeMegaPokemon') }}
-                  </label>
-                </div>
+                      <!-- Include Mega Pokémon -->
+                      <div class="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          :checked="settings.includeMegaPokemon" 
+                          @change="(e) => updateIncludeMegaPokemon((e.target as HTMLInputElement).checked)"
+                          class="w-4 h-4 rounded border border-input cursor-pointer"
+                          id="includeMegaPokemonCheckbox"
+                        />
+                        <label for="includeMegaPokemonCheckbox" class="text-sm cursor-pointer">
+                          {{ t('sidebar.includeMegaPokemon') }}
+                        </label>
+                      </div>
 
-                <!-- Hints Enabled Checkbox -->
-                <div class="flex items-center gap-2">
-                  <input 
-                    type="checkbox" 
-                    :checked="settings.hintsEnabled" 
-                    @change="(e) => updateHintsEnabled((e.target as HTMLInputElement).checked)"
-                    class="w-4 h-4 rounded border border-input cursor-pointer"
-                    id="hintsEnabledCheckbox"
-                  />
-                  <label for="hintsEnabledCheckbox" class="text-sm font-medium cursor-pointer">
-                    {{ t('sidebar.hintsEnabled') }}
-                  </label>
-                </div>
+                      <!-- Generation Settings -->
+                      <GenerationSelect 
+                        :model-value="settings.generation" 
+                        @update:model-value="updateGeneration"
+                        :label="t('sidebar.generation')"
+                      />
 
-                <!-- Max Score Input -->
-                <div class="flex flex-col gap-2">
-                  <label for="maxScoreInput" class="text-sm font-medium">
-                    {{ t('sidebar.maxScore') }}
-                  </label>
-                  <Input 
-                    id="maxScoreInput"
-                    type="number" 
-                    :model-value="settings.maxScore" 
-                    @update:model-value="(val) => updateMaxScore(Math.max(1, typeof val === 'number' ? val : parseInt(val as string) || 1))"
-                    min="1"
-                    max="999"
-                  />
-                </div>
+                      <GenerationSelect 
+                        :model-value="settings.minGeneration" 
+                        @update:model-value="updateMinGeneration"
+                        :label="t('sidebar.minGeneration')"
+                      />
 
-                <!-- Min Generation Setting (Second) -->
-                <GenerationSelect 
-                  :model-value="settings.minGeneration" 
-                  @update:model-value="updateMinGeneration"
-                  :label="t('sidebar.minGeneration')"
-                />
+                      <GenerationSelect 
+                        :model-value="settings.maxGeneration" 
+                        @update:model-value="updateMaxGeneration"
+                        :label="t('sidebar.maxGeneration')"
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
 
-                <!-- Max Generation Setting (Third) -->
-                <GenerationSelect 
-                  :model-value="settings.maxGeneration" 
-                  @update:model-value="updateMaxGeneration"
-                  :label="t('sidebar.maxGeneration')"
-                />
+                  <!-- Quiz Settings Section -->
+                  <AccordionItem value="quiz">
+                    <AccordionTrigger class="text-sm font-medium py-2 hover:no-underline cursor-pointer">
+                      {{ t('sidebar.quizSettings') }}
+                    </AccordionTrigger>
+                    <AccordionContent class="space-y-3 pt-2">
+                      <!-- Max Score -->
+                      <div class="flex flex-col gap-2">
+                        <label for="maxScoreInput" class="text-sm font-medium">
+                          {{ t('sidebar.maxScore') }}
+                        </label>
+                        <Input 
+                          id="maxScoreInput"
+                          type="number" 
+                          :model-value="settings.maxScore" 
+                          @update:model-value="(val) => updateMaxScore(Math.max(1, typeof val === 'number' ? val : parseInt(val as string) || 1))"
+                          min="1"
+                          max="999"
+                        />
+                      </div>
 
-                <!-- Generation Setting (Fourth) -->
-                <GenerationSelect 
-                  :model-value="settings.generation" 
-                  @update:model-value="updateGeneration"
-                  :label="t('sidebar.generation')"
-                />
+                      <!-- Hints Enabled -->
+                      <div class="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          :checked="settings.hintsEnabled" 
+                          @change="(e) => updateHintsEnabled((e.target as HTMLInputElement).checked)"
+                          class="w-4 h-4 rounded border border-input cursor-pointer"
+                          id="hintsEnabledCheckbox"
+                        />
+                        <label for="hintsEnabledCheckbox" class="text-sm cursor-pointer">
+                          {{ t('sidebar.hintsEnabled') }}
+                        </label>
+                      </div>
+
+                      <!-- VGC Mode (only for Damage Quiz) -->
+                      <div v-if="settings.quizMode === 'damage'" class="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          :checked="settings.vgc" 
+                          @change="(e) => updateVgc((e.target as HTMLInputElement).checked)"
+                          class="w-4 h-4 rounded border border-input cursor-pointer"
+                          id="vgcCheckbox"
+                        />
+                        <label for="vgcCheckbox" class="text-sm cursor-pointer">
+                          {{ t('sidebar.vgcMode') }}
+                        </label>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </div>
             </SidebarMenuItem>
           </SidebarMenu>

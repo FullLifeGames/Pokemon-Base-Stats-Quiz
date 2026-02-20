@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { useI18n } from 'vue-i18n'
 import { useQuizLogic, type SpeciesFilterOptions } from '@/composables/useQuizLogic'
+import { MAX_DAMAGE_PERCENT } from '@/composables/useDamageCalc'
 import PlayerCard from './PlayerCard.vue'
 import StatDisplay from './StatDisplay.vue'
 import LearnsetDisplay from './LearnsetDisplay.vue'
@@ -266,6 +267,8 @@ function submitDamageAnswer() {
           <DamageScenarioDisplay
             :scenario="currentRound.damageScenario ?? null"
             :show-answer="isRoundResult"
+            :level="settings.vgc ? 50 : 100"
+            :generation="generation"
           />
         </template>
       </div>
@@ -307,13 +310,13 @@ function submitDamageAnswer() {
               <Slider
                 v-model="damageGuessValue"
                 :min="0"
-                :max="200"
+                :max="MAX_DAMAGE_PERCENT"
                 :step="1"
                 class="w-full"
               />
               <div class="flex justify-between text-xs text-muted-foreground">
                 <span>0%</span>
-                <span>200%</span>
+                <span>{{ MAX_DAMAGE_PERCENT }}%</span>
               </div>
             </div>
             <Button @click="submitDamageAnswer" class="cursor-pointer w-full">
