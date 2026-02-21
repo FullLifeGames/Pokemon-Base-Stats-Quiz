@@ -191,6 +191,7 @@
       "psychic": "Psychic Terrain",
       "misty": "Misty Terrain"
     },
+    "hits": "({count} hits)",
     "guessPrompt": "How much % damage does this move deal?",
     "guessPlaceholder": "e.g. 45",
     "submit": "Submit",

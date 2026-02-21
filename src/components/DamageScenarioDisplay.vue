@@ -110,6 +110,9 @@ function getTerrainIcon(terrain: string): string {
         <div class="bg-primary text-primary-foreground text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full text-center whitespace-nowrap max-w-28 md:max-w-none truncate">
           {{ scenario.moveName }}
         </div>
+        <span v-if="scenario.hits" class="text-[10px] md:text-xs font-semibold text-orange-600 dark:text-orange-400">
+          {{ t('damage.hits', { count: scenario.hits }) }}
+        </span>
         <span class="text-[10px] md:text-xs text-muted-foreground">→</span>
       </div>
 

@@ -191,6 +191,7 @@
       "psychic": "Psychofeld",
       "misty": "Nebelfeld"
     },
+    "hits": "({count} Treffer)",
     "guessPrompt": "Wie viel % Schaden macht diese Attacke?",
     "guessPlaceholder": "z.B. 45",
     "submit": "Absenden",

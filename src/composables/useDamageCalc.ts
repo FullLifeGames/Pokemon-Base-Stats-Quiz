@@ -79,6 +79,8 @@ export interface DamageScenario {
   damagePercent: number
   /** Min/max damage as % of defender HP. */
   damageRange: [number, number]
+  /** Number of hits for multi-hit moves (e.g. 5 for Scale Shot). Only set when > 1. */
+  hits?: number
   /** Active field effects triggered by Pokémon abilities. */
   fieldEffects?: FieldEffects
   /** Tera type the attacker is actively using (only set when tera is active). */
@@ -329,7 +331,7 @@ export function useDamageCalc(
           teraType: activeDefTeraType,
         })
 
-        const move = new Move(gen.value, moveName)
+        const move = new Move(gen.value, moveName, { hits: 5, ability: atkSet.ability })
 
         // Detect field effects from abilities (defender takes precedence)
         const attackerFieldEffects = getFieldEffectsFromAbility(atkSet.ability)
@@ -376,6 +378,7 @@ export function useDamageCalc(
             Math.round(minPct * 10) / 10,
             Math.round(maxPct * 10) / 10,
           ],
+          hits: move.hits > 1 ? move.hits : undefined,
           fieldEffects: Object.keys(scenarioFieldEffects).length > 0 ? scenarioFieldEffects : undefined,
           attackerTeraType: activeAtkTeraType,
           defenderTeraType: activeDefTeraType,
