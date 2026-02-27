@@ -317,7 +317,6 @@ export function useDamageCalc(
           nature: atkSet.nature,
           ability: atkSet.ability,
           evs: toStatSpread(atkSet.evs),
-          ivs: atkSet.ivs ? toStatSpread(atkSet.ivs) : undefined,
           teraType: activeAtkTeraType,
         })
 
@@ -327,7 +326,6 @@ export function useDamageCalc(
           nature: defSet.nature,
           ability: defSet.ability,
           evs: toStatSpread(defSet.evs),
-          ivs: defSet.ivs ? toStatSpread(defSet.ivs) : undefined,
           teraType: activeDefTeraType,
         })
 
