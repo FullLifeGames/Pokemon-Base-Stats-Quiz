@@ -67,6 +67,10 @@ export interface VsRound {
   learnsetMoves?: Record<string, MoveInfo[]>
   /** Quiz-mode-specific: damage scenario (damage mode) */
   damageScenario?: DamageScenario
+  /** Quiz-mode-specific: numeric value to guess (weight/height modes) */
+  targetValue?: number
+  /** Unit for targetValue (kg/m). */
+  targetUnit?: 'kg' | 'm'
 }
 
 /**
@@ -102,7 +106,10 @@ export type VsMessage =
   | { type: 'new-round'; round: VsRound }
   | { type: 'guess'; playerId: string; pokemonId: string; correct: boolean; timestamp: number }
   | { type: 'damage-guess'; playerId: string; damagePercent: number; correct: boolean; timestamp: number }
+  | { type: 'numeric-guess'; playerId: string; value: number; timestamp: number }
+  | { type: 'retract-answer'; playerId: string }
   | { type: 'player-answered'; playerId: string }
+  | { type: 'player-unanswered'; playerId: string }
   | { type: 'round-result'; results: PlayerRoundResult[]; correctPokemon: string }
   | { type: 'match-end'; players: VsPlayer[] }
   | { type: 'restart-game' }

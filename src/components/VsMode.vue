@@ -45,6 +45,8 @@ const {
   startGame,
   submitGuess,
   submitDamageGuess,
+  submitNumericGuess,
+  retractAnswer,
   restartGame,
   updateSettings,
   leaveGame,
@@ -165,6 +167,8 @@ const showResults = computed(() => gameState.value === 'match-end')
     :settings="settings"
     @submit-guess="submitGuess"
     @submit-damage-guess="submitDamageGuess"
+    @submit-numeric-guess="submitNumericGuess"
+    @retract-answer="retractAnswer"
     @quit="handleQuit"
   />
 

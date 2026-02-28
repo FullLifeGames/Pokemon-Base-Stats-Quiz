@@ -56,7 +56,9 @@
     "quizModes": {
       "baseStat": "Base Stats",
       "learnset": "Learnset",
-      "damage": "Damage Calc"
+      "damage": "Damage Calc",
+      "weight": "Weight",
+      "height": "Height"
     }
   },
   "requestHint": "Request Hint",
@@ -198,5 +200,17 @@
     "correctGuess": "✓ Correct! You guessed {guess}% — actual range was {min}-{max}%.",
     "incorrectGuess": "✗ Incorrect! You guessed {guess}% — actual range was {min}-{max}%.",
     "noScenario": "Could not generate a damage scenario. Try again."
+  },
+  "valueQuiz": {
+    "weightTitle": "Weight Quiz",
+    "heightTitle": "Height Quiz",
+    "weightExplanation": "A Pokémon is shown. Guess its weight in kilograms.",
+    "heightExplanation": "A Pokémon is shown. Guess its height in meters.",
+    "vsWeightExplanation": "Guess the Pokémon's weight in kilograms. Faster correct answers score more points.",
+    "vsHeightExplanation": "Guess the Pokémon's height in meters. Faster correct answers score more points.",
+    "weightPrompt": "What is this Pokémon's weight?",
+    "heightPrompt": "What is this Pokémon's height?",
+    "correctGuess": "✓ Correct! You guessed {guess} {unit} — actual value is {value} {unit}.",
+    "incorrectGuess": "✗ Incorrect! You guessed {guess} {unit} — actual value is {value} {unit}."
   }
 }

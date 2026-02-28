@@ -56,7 +56,7 @@ function getTerrainIcon(terrain: string): string {
 </script>
 
 <template>
-  <div v-if="scenario" class="flex flex-col gap-3 md:gap-4">
+  <div v-if="scenario" class="w-full min-w-0 flex flex-col gap-3 md:gap-4">
     <!-- Active Field Effects -->
     <div v-if="scenario.fieldEffects && (scenario.fieldEffects.weather || scenario.fieldEffects.terrain)" class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30 p-2.5 md:p-3">
       <div class="flex items-center gap-2 flex-wrap">
@@ -75,9 +75,9 @@ function getTerrainIcon(terrain: string): string {
     </div>
 
     <!-- VS layout -->
-    <div class="grid grid-cols-[1fr_auto_1fr] items-start gap-2 md:gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-start gap-2 md:gap-4 min-w-0">
       <!-- Attacker -->
-      <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30 p-2.5 md:p-3 2xl:p-4">
+      <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30 p-2.5 md:p-3 2xl:p-4 min-w-0">
         <div class="flex items-center gap-1.5 mb-2">
           <span class="text-[10px] md:text-xs font-bold uppercase text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/50 px-1.5 py-0.5 rounded">
             {{ t('damage.attacker') }}
@@ -105,19 +105,19 @@ function getTerrainIcon(terrain: string): string {
       </div>
 
       <!-- Move indicator -->
-      <div class="flex flex-col items-center justify-center self-center gap-1 px-1">
+      <div class="flex flex-row md:flex-col items-center justify-center self-center gap-1 md:gap-1 px-1">
         <span class="text-lg md:text-2xl">⚔️</span>
-        <div class="bg-primary text-primary-foreground text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full text-center whitespace-nowrap max-w-28 md:max-w-none truncate">
+        <div class="bg-primary text-primary-foreground text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full text-center whitespace-normal md:whitespace-nowrap max-w-full md:max-w-none break-words">
           {{ scenario.moveName }}
         </div>
         <span v-if="scenario.hits" class="text-[10px] md:text-xs font-semibold text-orange-600 dark:text-orange-400">
           {{ t('damage.hits', { count: scenario.hits }) }}
         </span>
-        <span class="text-[10px] md:text-xs text-muted-foreground">→</span>
+        <span class="hidden md:inline text-[10px] md:text-xs text-muted-foreground">→</span>
       </div>
 
       <!-- Defender -->
-      <div class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/30 p-2.5 md:p-3 2xl:p-4">
+      <div class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/30 p-2.5 md:p-3 2xl:p-4 min-w-0">
         <div class="flex items-center gap-1.5 mb-2">
           <span class="text-[10px] md:text-xs font-bold uppercase text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-1.5 py-0.5 rounded">
             {{ t('damage.defender') }}

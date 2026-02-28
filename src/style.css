@@ -111,6 +111,40 @@
 }
 
 @layer base {
+  html {
+    font-size: 16px;
+  }
+
+  @media (min-width: 1280px) {
+    html {
+      font-size: 17px;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    html {
+      font-size: 19px;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    html {
+      font-size: 21px;
+    }
+  }
+
+  @media (min-width: 2560px) {
+    html {
+      font-size: 24px;
+    }
+  }
+
+  @media (min-width: 3200px) {
+    html {
+      font-size: 26px;
+    }
+  }
+
   * {
     @apply border-border outline-ring/50;
   }

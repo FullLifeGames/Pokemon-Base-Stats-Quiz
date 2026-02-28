@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { X } from 'lucide-vue-next'
 import { computed, ref, watch, onMounted } from 'vue'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -11,8 +10,11 @@ import LearnsetDisplay from '@/components/LearnsetDisplay.vue'
 import PokemonSelector from '@/components/PokemonSelector.vue'
 import HintDisplay from '@/components/HintDisplay.vue'
 import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue'
+import DismissibleInfoBanner from '@/components/DismissibleInfoBanner.vue'
 import type { QuizSettings } from '@/types/settings'
 import type { GenerationNum } from '@pkmn/dex'
+import { useQuizFlowTiming } from '@/composables/useQuizFlowTiming'
+import { useSoloQuizLifecycle } from '@/composables/useSoloQuizLifecycle'
 
 const { t, locale } = useI18n()
 
@@ -23,18 +25,23 @@ const props = defineProps({
   },
 })
 
-const progressValue = ref(0)
 const correctGuesses = ref(0)
 const incorrectGuesses = ref(0)
-const elapsedTime = ref(0)
 const showCongratulations = ref(false)
-const showExplanation = ref(true)
 const hintLevel = ref(0)
 const resultMessageRef = ref<HTMLDivElement | null>(null)
 const currentMoves = ref<MovesByType | null>(null)
 const isLoadingMoves = ref(true)
-let timerInterval: ReturnType<typeof setInterval> | null = null
-let loadingInterval: number | undefined
+const {
+  elapsedTime,
+  progressValue,
+  startTimer,
+  stopTimer,
+  resetElapsedTime,
+  resetProgress,
+  runLoadingTransition,
+  formatTime,
+} = useQuizFlowTiming()
 
 // Shared quiz logic
 const speciesOptions = computed<SpeciesFilterOptions>(() => {
@@ -69,37 +76,13 @@ async function loadMoves() {
   isLoadingMoves.value = false
 }
 
-const resetQuiz = async () => {
+const resetLearnsetState = async () => {
   value.value = ''
-  progressValue.value = 0
-  clearInterval(loadingInterval)
   correctGuesses.value = 0
   incorrectGuesses.value = 0
-  elapsedTime.value = 0
   hintLevel.value = 0
   showCongratulations.value = false
   await loadMoves()
-  startTimer()
-}
-
-const startTimer = () => {
-  if (timerInterval) clearInterval(timerInterval)
-  timerInterval = setInterval(() => {
-    elapsedTime.value++
-  }, 1000)
-}
-
-const stopTimer = () => {
-  if (timerInterval) {
-    clearInterval(timerInterval)
-    timerInterval = null
-  }
-}
-
-const formatTime = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
 // Watch for settings changes and regenerate
@@ -110,8 +93,7 @@ watch(() => [props.settings.generation, props.settings.minGeneration, props.sett
 // Watch for correctGuesses to check if maxScore is reached
 watch(() => correctGuesses.value, (newVal) => {
   if (newVal === props.settings.maxScore && newVal > 0) {
-    progressValue.value = 0
-    clearInterval(loadingInterval)
+    resetProgress()
     stopTimer()
     showCongratulations.value = true
   }
@@ -133,27 +115,21 @@ const isCorrect = computed(() => {
   return value.value === currentPokemon.value.name
 })
 
-const nextPokemon = async () => {
+const advanceLearnsetQuestion = async () => {
   value.value = ''
-  progressValue.value = 0
   hintLevel.value = 0
   await loadMoves()
-  startTimer()
 }
 
-function setLoading() {
-  progressValue.value = 0
-  loadingInterval = setInterval(() => {
-    progressValue.value += Math.random() * 5
-    if (progressValue.value >= 100) {
-      progressValue.value = 100
-      clearInterval(loadingInterval)
-      setTimeout(nextPokemon, 500)
-    }
-  }, 100)
-}
+const { resetQuiz, advanceQuestion } = useSoloQuizLifecycle({
+  resetProgress,
+  resetElapsedTime,
+  startTimer,
+  onResetState: resetLearnsetState,
+  onAdvanceState: advanceLearnsetQuestion,
+})
 
-function selectPokemon(selectedValue: string) {
+function handleLearnsetSelection(selectedValue: string) {
   value.value = selectedValue === value.value ? '' : selectedValue
 
   if (isCorrect.value) {
@@ -163,7 +139,9 @@ function selectPokemon(selectedValue: string) {
   }
 
   stopTimer()
-  setLoading()
+  runLoadingTransition(() => {
+    void advanceQuestion()
+  })
 
   setTimeout(() => {
     if (resultMessageRef.value && window.innerWidth < 768) {
@@ -175,9 +153,9 @@ function selectPokemon(selectedValue: string) {
 
 <template>
   <div class="w-full h-full min-h-screen flex flex-col p-3 md:p-4 lg:p-6">
-    <div class="flex flex-col gap-3 md:gap-4 flex-1">
+    <div class="flex flex-col gap-2 md:gap-3 flex-1">
       <!-- Header Section with Score -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3">
         <div>
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-semibold">
             {{ t('learnset.title') }}
@@ -194,24 +172,17 @@ function selectPokemon(selectedValue: string) {
             </span>
           </div>
         </div>
+
+        <DismissibleInfoBanner class="md:flex-1 md:max-w-3xl md:mx-2 md:self-center">
+          <p>{{ t('learnset.explanation') }}</p>
+        </DismissibleInfoBanner>
+
         <Button
-          class="cursor-pointer w-full md:w-auto"
+          class="cursor-pointer w-full md:w-auto md:self-center"
           @click="resetQuiz"
         >
           {{ t('resetQuiz') }}
         </Button>
-      </div>
-
-      <!-- Explanation Text -->
-      <div v-if="showExplanation" class="flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 px-4 md:px-6 py-3 md:py-4 rounded-lg text-sm md:text-base">
-        <p>{{ t('learnset.explanation') }}</p>
-        <button
-          @click="showExplanation = false"
-          class="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors cursor-pointer shrink-0"
-          :title="t('close')"
-        >
-          <X class="w-4 h-4" />
-        </button>
       </div>
 
       <!-- Loading state -->
@@ -251,7 +222,7 @@ function selectPokemon(selectedValue: string) {
             :species-selection="speciesSelection"
             :selected-value="value"
             :disabled="progressValue > 0"
-            @select="selectPokemon"
+            @select="handleLearnsetSelection"
           />
 
           <!-- Result Message -->

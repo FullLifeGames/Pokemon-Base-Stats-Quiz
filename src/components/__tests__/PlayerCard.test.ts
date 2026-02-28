@@ -29,7 +29,6 @@ describe('PlayerCard.vue', () => {
     player: VsPlayer
     isMe: boolean
     showResult: boolean
-    isWinner: boolean
   }) => {
     return mount(PlayerCard, {
       props,
@@ -51,7 +50,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: false,
-        isWinner: false,
       })
       expect(wrapper.exists()).toBe(true)
     })
@@ -62,7 +60,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: false,
-        isWinner: false,
       })
       expect(wrapper.text()).toContain('John Doe')
     })
@@ -73,7 +70,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: false,
-        isWinner: false,
       })
       expect(wrapper.text()).toContain('5')
     })
@@ -84,7 +80,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: true,
         showResult: false,
-        isWinner: false,
       })
       expect(wrapper.text()).toContain('vs.you')
     })
@@ -95,45 +90,20 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: false,
-        isWinner: false,
       })
       expect(wrapper.text()).not.toContain('vs.you')
     })
   })
 
   describe('Winner Styling', () => {
-    it('displays crown emoji when player is winner', () => {
+    it('does not display crown indicator', () => {
       const player = createPlayer()
       const wrapper = mountComponent({
         player,
         isMe: false,
         showResult: false,
-        isWinner: true,
-      })
-      expect(wrapper.text()).toContain('👑')
-    })
-
-    it('does not display crown when player is not winner', () => {
-      const player = createPlayer()
-      const wrapper = mountComponent({
-        player,
-        isMe: false,
-        showResult: false,
-        isWinner: false,
       })
       expect(wrapper.text()).not.toContain('👑')
-    })
-
-    it('applies winner ring styling', () => {
-      const player = createPlayer()
-      const wrapper = mountComponent({
-        player,
-        isMe: false,
-        showResult: false,
-        isWinner: true,
-      })
-      const card = wrapper.find('div')
-      expect(card.classes()).toContain('ring-2')
     })
   })
 
@@ -144,7 +114,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: false,
-        isWinner: false,
       })
       expect(wrapper.text()).toContain('vs.answered')
     })
@@ -155,7 +124,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: false,
-        isWinner: false,
       })
       expect(wrapper.text()).toContain('vs.thinking')
     })
@@ -168,7 +136,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: true,
-        isWinner: false,
       })
       expect(wrapper.text()).toContain('TestPlayer 0 +0')
     })
@@ -179,7 +146,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: true,
-        isWinner: false,
       })
       expect(wrapper.text()).toContain('TestPlayer 0 +0')
     })
@@ -190,7 +156,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: true,
-        isWinner: false,
       })
       expect(wrapper.text()).toContain('TestPlayer 0 +0')
     })
@@ -203,7 +168,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: false,
-        isWinner: false,
       })
       expect(wrapper.text()).toContain('vs.disconnected')
     })
@@ -214,7 +178,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: false,
-        isWinner: false,
       })
       expect(wrapper.text()).not.toContain('vs.disconnected')
     })
@@ -227,7 +190,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: true,
         showResult: false,
-        isWinner: false,
       })
       const card = wrapper.find('div')
       expect(card.classes()).toContain('border-primary')
@@ -239,7 +201,6 @@ describe('PlayerCard.vue', () => {
         player,
         isMe: false,
         showResult: false,
-        isWinner: false,
       })
       const card = wrapper.find('div')
       expect(card.classes()).toContain('border-border')

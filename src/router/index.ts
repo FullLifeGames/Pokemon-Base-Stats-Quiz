@@ -37,6 +37,18 @@ const router = createRouter({
       meta: { quizMode: 'damage', vgc: true },
     },
     {
+      path: '/solo/weight',
+      name: 'solo-weight',
+      component: () => import('@/components/SoloQuiz.vue'),
+      meta: { quizMode: 'weight', vgc: false },
+    },
+    {
+      path: '/solo/height',
+      name: 'solo-height',
+      component: () => import('@/components/SoloQuiz.vue'),
+      meta: { quizMode: 'height', vgc: false },
+    },
+    {
       path: '/vs',
       name: 'vs',
       component: () => import('@/components/VsMode.vue'),

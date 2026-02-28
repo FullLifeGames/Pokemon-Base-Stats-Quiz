@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Clock, LogOut, Swords, X } from 'lucide-vue-next'
+import { Clock, LogOut, Swords } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { useI18n } from 'vue-i18n'
@@ -13,7 +13,9 @@ import DamageScenarioDisplay from './DamageScenarioDisplay.vue'
 import DamageHintDisplay from './DamageHintDisplay.vue'
 import PokemonSelector from './PokemonSelector.vue'
 import HintDisplay from './HintDisplay.vue'
+import ValueOptionGrid from './ValueOptionGrid.vue'
 import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue'
+import { generateValueQuizOptions, getValueQuizTextKeys, isValueQuizMode, resolveValueQuizUnit, type ValueQuizMode } from '@/lib/valueQuizOptions'
 import type { VsPlayer, VsRound, VsRoomSettings, PlayerRoundResult } from '@/types/vsMode'
 import type { QuizMode } from '@/types/settings'
 import type { Species, GenerationNum } from '@pkmn/dex'
@@ -35,15 +37,20 @@ const props = defineProps<{
 const emit = defineEmits<{
   'submit-guess': [pokemonId: string]
   'submit-damage-guess': [damagePercent: number]
+  'submit-numeric-guess': [value: number]
+  'retract-answer': []
   'quit': []
 }>()
 
 const value = ref('')
 const damageGuessValue = ref([50])
+const numericOptions = ref<number[]>([])
+const selectedNumericOption = ref<number | null>(null)
 const hasAnswered = ref(false)
-const infoBannerDismissed = ref(false)
 
 const quizMode = computed<QuizMode>(() => props.settings.quizMode ?? 'base-stat')
+const isValueMode = computed(() => isValueQuizMode(quizMode.value))
+const valueQuizMode = computed<ValueQuizMode | null>(() => isValueQuizMode(quizMode.value) ? quizMode.value : null)
 
 // Shared quiz logic (stats extraction, localized names, species selection)
 const speciesOptions = computed<SpeciesFilterOptions>(() => props.settings)
@@ -94,6 +101,7 @@ const timerWarning = computed(() => {
 
 // How many have answered
 const answeredCount = computed(() => props.players.filter(p => p.hasAnswered).length)
+const canChangeSubmittedAnswer = computed(() => answeredCount.value < props.players.length)
 
 // Round result
 const isRoundResult = computed(() => props.gameState === 'round-result')
@@ -104,32 +112,30 @@ const sortedRoundResults = computed<PlayerRoundResult[]>(() => {
   return [...props.currentRound.results].sort((a, b) => b.score - a.score)
 })
 
-// Top scorer for this round (for crown display)
-const topRoundScorer = computed(() => {
-  if (sortedRoundResults.value.length === 0) return null
-  const top = sortedRoundResults.value[0]
-  if (!top || top.score === 0) return null
-  return top.playerId
-})
-
 // Answer display for spectators
 const correctPokemonName = computed(() => {
   if (quizMode.value === 'damage') {
     const scenario = props.currentRound.damageScenario
     return scenario ? `${scenario.damageRange[0]}-${scenario.damageRange[1]}%` : '?'
   }
+  if (isValueQuizMode(quizMode.value)) {
+    const valueUnit = resolveValueQuizUnit(quizMode.value, props.currentRound.targetUnit)
+    const targetValue = props.currentRound.targetValue
+    return targetValue !== undefined ? `${targetValue} ${valueUnit}` : '?'
+  }
   return getLocalizedName(props.currentRound.pokemonId)
 })
 
 // Damage quiz hints (logic moved to DamageHintDisplay component)
 
-// Info banner text
-const infoBannerText = computed(() => {
-  switch (quizMode.value) {
-    case 'learnset': return t('learnset.explanation')
-    case 'damage': return t('damage.vsExplanation')
-    default: return t('vs.identifyStats')
-  }
+const valuePromptText = computed(() => {
+  if (!valueQuizMode.value) return ''
+  return t(getValueQuizTextKeys(valueQuizMode.value).promptKey)
+})
+
+const currentValueUnit = computed(() => {
+  if (!valueQuizMode.value) return ''
+  return resolveValueQuizUnit(valueQuizMode.value, props.currentRound.targetUnit)
 })
 
 // Game progress display
@@ -144,10 +150,47 @@ const progressLabel = computed(() => {
 watch(() => props.roundNumber, () => {
   value.value = ''
   damageGuessValue.value = [50]
+  selectedNumericOption.value = null
+  numericOptions.value = []
   hasAnswered.value = false
+
+  if (isValueQuizMode(quizMode.value) && props.currentRound.targetValue !== undefined) {
+    numericOptions.value = generateNumericOptions(props.currentRound.targetValue, quizMode.value)
+  }
 })
 
-function selectPokemon(selectedValue: string) {
+watch(
+  () => [quizMode.value, props.currentRound.targetValue] as const,
+  ([mode, targetValue]) => {
+    if (isValueQuizMode(mode) && targetValue !== undefined) {
+      numericOptions.value = generateNumericOptions(targetValue, mode)
+    }
+  },
+  { immediate: true },
+)
+
+function generateNumericOptions(target: number, mode: ValueQuizMode): number[] {
+  return generateValueQuizOptions(target, mode)
+}
+
+function changeCurrentAnswer() {
+  if (!canChangeSubmittedAnswer.value) return
+  if (hasAnswered.value) {
+    emit('retract-answer')
+  }
+
+  if (quizMode.value === 'damage') {
+    changeDamageAnswer()
+    return
+  }
+  if (isValueMode.value) {
+    changeNumericAnswer()
+    return
+  }
+  changeAnswer()
+}
+
+function handleVsPokemonSelection(selectedValue: string) {
   if (props.isSpectator) return
 
   value.value = selectedValue
@@ -164,6 +207,11 @@ function changeDamageAnswer() {
   hasAnswered.value = false
 }
 
+function changeNumericAnswer() {
+  hasAnswered.value = false
+  selectedNumericOption.value = null
+}
+
 function submitDamageAnswer() {
   if (props.isSpectator) return
   const guess = damageGuessValue.value[0] ?? 0
@@ -172,10 +220,22 @@ function submitDamageAnswer() {
   emit('submit-damage-guess', guess)
 }
 
+function submitNumericAnswer(choice: number) {
+  if (props.isSpectator) return
+  selectedNumericOption.value = choice
+
+  hasAnswered.value = true
+  emit('submit-numeric-guess', choice)
+}
+
 // Get localized display name for a player's guess
 function getGuessDisplayName(guess: string | null): string {
   if (!guess) return '—'
   if (quizMode.value === 'damage') return `${guess}%`
+  if (isValueQuizMode(quizMode.value)) {
+    const unit = resolveValueQuizUnit(quizMode.value, props.currentRound.targetUnit)
+    return `${guess} ${unit}`
+  }
   return getLocalizedName(guess) || guess
 }
 </script>
@@ -236,7 +296,6 @@ function getGuessDisplayName(guess: string | null): string {
         :player="player"
         :is-me="player.id === myPlayerId"
         :show-result="isRoundResult"
-        :is-winner="isRoundResult && topRoundScorer === player.id"
       />
     </div>
 
@@ -249,21 +308,9 @@ function getGuessDisplayName(guess: string | null): string {
           🔍 {{ t('vs.spectatorAnswer') }}: {{ correctPokemonName }}
         </div>
 
-        <!-- Info banner -->
-        <div v-if="!infoBannerDismissed" class="hidden md:flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 px-4 2xl:px-5 py-3 2xl:py-4 rounded-lg text-sm 2xl:text-base">
-          <p>{{ infoBannerText }}</p>
-          <button
-            @click="infoBannerDismissed = true"
-            class="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors cursor-pointer shrink-0"
-            :title="t('close')"
-          >
-            <X class="w-4 h-4 2xl:w-5 2xl:h-5" />
-          </button>
-        </div>
-
         <!-- Quiz content: mode-dependent -->
         <template v-if="quizMode === 'base-stat'">
-          <StatDisplay :stats="currentStats" :show-bst="true" />
+          <StatDisplay :stats="currentStats" :show-bst="true" compact-table />
           <HintDisplay
             v-if="settings.hintsEnabled"
             :hint-level="currentRound.hintLevel"
@@ -296,6 +343,18 @@ function getGuessDisplayName(guess: string | null): string {
             :hint-level="currentRound.hintLevel"
           />
         </template>
+
+        <template v-else-if="isValueMode">
+          <div class="rounded-xl border bg-card px-4 py-6 md:p-8 flex flex-col items-center gap-4">
+            <div class="w-24 h-24 md:w-32 md:h-32 flex items-center justify-center">
+              <SpritesRenderer class="max-w-full max-h-full" :generation="generation" :name="currentRound.pokemonId" />
+            </div>
+            <p class="text-lg md:text-xl font-semibold text-center">{{ getLocalizedName(currentRound.pokemonId) }}</p>
+            <p class="text-sm text-muted-foreground text-center">
+              {{ valuePromptText }}
+            </p>
+          </div>
+        </template>
       </div>
 
       <!-- Right column: selector + result -->
@@ -308,6 +367,9 @@ function getGuessDisplayName(guess: string | null): string {
               <template v-if="quizMode === 'damage'">
                 {{ t('vs.youAnswered', { pokemon: damageGuessValue[0] + '%' }) }}
               </template>
+              <template v-else-if="isValueMode">
+                {{ t('vs.youAnswered', { pokemon: selectedNumericOption + ' ' + currentValueUnit }) }}
+              </template>
               <template v-else>
                 {{ t('vs.youAnswered', { pokemon: selectedPokemon?.label || value }) }}
               </template>
@@ -315,20 +377,23 @@ function getGuessDisplayName(guess: string | null): string {
             <p class="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
               {{ t('vs.playersAnswered', { n: answeredCount, total: players.length }) }}
             </p>
-            <button
-              class="text-xs text-primary hover:underline cursor-pointer mt-1"
-              @click="quizMode === 'damage' ? changeDamageAnswer() : changeAnswer()"
+            <Button
+              v-if="canChangeSubmittedAnswer"
+              variant="outline"
+              size="sm"
+              class="mt-1 cursor-pointer w-full sm:w-auto max-w-full whitespace-normal h-auto py-1.5 text-center"
+              @click="changeCurrentAnswer()"
             >
               {{ t('vs.canChangeAnswer') }}
-            </button>
+            </Button>
           </div>
 
           <!-- Pokemon selector for base-stat / learnset modes -->
           <PokemonSelector
-            v-if="!hasAnswered && quizMode !== 'damage'"
+            v-if="!hasAnswered && (quizMode === 'base-stat' || quizMode === 'learnset')"
             :species-selection="speciesSelection"
             :selected-value="value"
-            @select="selectPokemon"
+            @select="handleVsPokemonSelection"
           />
 
           <!-- Damage guess input for damage mode -->
@@ -354,10 +419,18 @@ function getGuessDisplayName(guess: string | null): string {
               {{ t('damage.submit') }}
             </Button>
           </div>
+
+          <!-- Numeric guess input for weight/height modes -->
+          <ValueOptionGrid
+            v-if="!hasAnswered && isValueMode"
+            :options="numericOptions"
+            :unit="currentValueUnit"
+            @select="submitNumericAnswer"
+          />
         </div>
 
         <!-- Round Result -->
-        <div v-if="isRoundResult" class="flex items-center justify-center lg:flex-1">
+        <div v-if="isRoundResult" class="flex items-start justify-center lg:pt-1">
           <div class="rounded-xl px-5 md:px-6 2xl:px-8 py-4 md:py-5 2xl:py-6 inline-flex flex-col items-center gap-2 md:gap-3 shadow-sm border w-full max-w-sm 2xl:max-w-md bg-card">
             <!-- Sprite for base-stat / learnset modes -->
             <div v-if="quizMode !== 'damage'" class="w-20 h-20 md:w-24 md:h-24 2xl:w-32 2xl:h-32 flex items-center justify-center">

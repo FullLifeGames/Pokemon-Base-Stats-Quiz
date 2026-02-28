@@ -14,6 +14,7 @@ const props = defineProps<{
     speed: number
   } | null
   showBst?: boolean
+  compactTable?: boolean
 }>()
 
 const statEntries = computed(() => {
@@ -37,14 +38,23 @@ const bst = computed(() => {
 </script>
 
 <template>
-  <div v-if="stats" class="flex flex-col gap-1.5 md:gap-2.5 lg:gap-3 2xl:gap-4">
+  <div
+    v-if="stats"
+    class="flex flex-col"
+    :class="compactTable ? 'gap-0' : 'gap-1.5 md:gap-2.5 lg:gap-3 2xl:gap-4'"
+  >
     <div
       v-for="stat in statEntries"
       :key="stat.key"
-      class="flex items-center gap-2 md:gap-3 2xl:gap-4 rounded-lg p-1.5 md:p-2.5 lg:p-3 2xl:p-4"
-      :class="stat.bgColor"
+      class="flex items-center gap-2 md:gap-3 2xl:gap-4 p-1.5 md:p-2.5 lg:p-3 2xl:p-4"
+      :class="{
+        [stat.bgColor]: true,
+        'rounded-lg': !compactTable,
+        'rounded-t-lg': compactTable && stat.key === 'hp',
+        'rounded-b-lg': compactTable && stat.key === 'spe',
+      }"
     >
-      <span class="text-[10px] md:text-xs lg:text-sm 2xl:text-base font-bold w-7 md:w-9 lg:w-10 2xl:w-12 text-center" :class="stat.textColor">{{ stat.label }}</span>
+      <span class="text-xs md:text-sm lg:text-sm 2xl:text-base font-bold w-8 md:w-9 lg:w-10 2xl:w-12 text-center" :class="stat.textColor">{{ stat.label }}</span>
       <div class="flex-1 h-2.5 md:h-3.5 lg:h-4 2xl:h-5 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
         <div
           class="h-full rounded-full transition-all duration-500"
@@ -52,12 +62,12 @@ const bst = computed(() => {
           :style="{ width: `${Math.min((stat.value / 255) * 100, 100)}%` }"
         />
       </div>
-      <span class="text-xs md:text-sm lg:text-base 2xl:text-lg font-bold tabular-nums w-7 md:w-9 lg:w-10 2xl:w-12 text-right" :class="stat.textColor">{{ stat.value }}</span>
+      <span class="text-sm md:text-sm lg:text-base 2xl:text-lg font-bold tabular-nums w-8 md:w-9 lg:w-10 2xl:w-12 text-right" :class="stat.textColor">{{ stat.value }}</span>
     </div>
     <!-- BST -->
-    <div v-if="showBst !== false" class="flex items-center justify-end gap-2 pr-1">
-      <span class="text-[10px] md:text-xs 2xl:text-sm font-semibold text-muted-foreground uppercase">{{ t('bst') }}</span>
-      <span class="text-xs md:text-sm lg:text-base 2xl:text-lg font-bold tabular-nums">{{ bst }}</span>
+    <div v-if="showBst !== false" class="flex items-center justify-end gap-2 pr-1" :class="compactTable ? 'mt-2' : ''">
+      <span class="text-xs md:text-sm 2xl:text-sm font-semibold text-muted-foreground uppercase">{{ t('bst') }}</span>
+      <span class="text-sm md:text-sm lg:text-base 2xl:text-lg font-bold tabular-nums">{{ bst }}</span>
     </div>
   </div>
 </template>

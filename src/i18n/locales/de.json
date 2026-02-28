@@ -56,7 +56,9 @@
     "quizModes": {
       "baseStat": "Base-Stats",
       "learnset": "Attacken",
-      "damage": "Schadensrechner"
+      "damage": "Schadensrechner",
+      "weight": "Gewicht",
+      "height": "Größe"
     }
   },
   "requestHint": "Hinweis anfordern",
@@ -198,5 +200,17 @@
     "correctGuess": "✓ Richtig! Du hast {guess}% geschätzt — tatsächliche Spanne war {min}-{max}%.",
     "incorrectGuess": "✗ Falsch! Du hast {guess}% geschätzt — tatsächliche Spanne war {min}-{max}%.",
     "noScenario": "Schadenszenario konnte nicht erstellt werden. Versuche es erneut."
+  },
+  "valueQuiz": {
+    "weightTitle": "Gewichts-Quiz",
+    "heightTitle": "Größen-Quiz",
+    "weightExplanation": "Ein Pokémon wird angezeigt. Schätze sein Gewicht in Kilogramm.",
+    "heightExplanation": "Ein Pokémon wird angezeigt. Schätze seine Größe in Metern.",
+    "vsWeightExplanation": "Schätze das Gewicht des Pokémon in Kilogramm. Schnellere richtige Antworten geben mehr Punkte.",
+    "vsHeightExplanation": "Schätze die Größe des Pokémon in Metern. Schnellere richtige Antworten geben mehr Punkte.",
+    "weightPrompt": "Wie schwer ist dieses Pokémon?",
+    "heightPrompt": "Wie groß ist dieses Pokémon?",
+    "correctGuess": "✓ Richtig! Du hast {guess} {unit} geschätzt — der tatsächliche Wert ist {value} {unit}.",
+    "incorrectGuess": "✗ Falsch! Du hast {guess} {unit} geschätzt — der tatsächliche Wert ist {value} {unit}."
   }
 }

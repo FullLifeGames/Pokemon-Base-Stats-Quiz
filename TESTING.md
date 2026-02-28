@@ -48,7 +48,28 @@ pnpm test:ui
 
 # Generate coverage report
 pnpm test:coverage
+
+# Run Playwright end-to-end tests (solo + multiplayer)
+pnpm test:e2e
+
+# Open Playwright UI mode
+pnpm test:e2e:ui
 ```
+
+### End-to-End Test Coverage (Playwright)
+
+E2E specs are located in `e2e/` and currently include:
+
+- `solo-quizzes.spec.ts`
+  - Plays all solo quiz routes (`base-stats`, `learnset`, `damage`, `weight`, `height`)
+  - Verifies gameplay interaction works per mode
+  - Verifies sprite/image rendering during quiz flow
+  - Includes VGC damage route validation
+- `multiplayer.spec.ts`
+  - Creates a VS room as host
+  - Joins room as second player
+  - Starts match and submits answers from both players
+  - Verifies in-game sprites/images render for both clients
 
 ### Watch Mode Features
 - Automatically re-runs tests when files change

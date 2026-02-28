@@ -191,17 +191,17 @@ describe('StatDisplay.vue', () => {
 
     it('applies responsive text size classes to labels', () => {
       const wrapper = mountComponent()
-      const label = wrapper.find('.font-bold.w-7')
-      expect(label.classes()).toContain('text-[10px]')
-      expect(label.classes()).toContain('md:text-xs')
+      const label = wrapper.find('.font-bold.w-8')
+      expect(label.classes()).toContain('text-xs')
+      expect(label.classes()).toContain('md:text-sm')
       expect(label.classes()).toContain('lg:text-sm')
       expect(label.classes()).toContain('2xl:text-base')
     })
 
     it('applies responsive text size classes to values', () => {
       const wrapper = mountComponent()
-      const value = wrapper.find('.tabular-nums.w-7.text-right')
-      expect(value.classes()).toContain('text-xs')
+      const value = wrapper.find('.tabular-nums.w-8.text-right')
+      expect(value.classes()).toContain('text-sm')
       expect(value.classes()).toContain('md:text-sm')
       expect(value.classes()).toContain('lg:text-base')
       expect(value.classes()).toContain('2xl:text-lg')

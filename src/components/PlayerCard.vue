@@ -10,7 +10,6 @@ const props = defineProps<{
   player: VsPlayer
   isMe: boolean
   showResult: boolean
-  isWinner: boolean
 }>()
 
 const statusIcon = computed(() => {
@@ -30,13 +29,8 @@ const statusIcon = computed(() => {
     :class="{
       'border-primary bg-primary/5': isMe,
       'border-border bg-card': !isMe,
-      'ring-2 ring-yellow-400 dark:ring-yellow-500': isWinner,
-      'pt-5 md:pt-4': isWinner,
     }"
   >
-    <!-- Winner crown -->
-    <div v-if="isWinner" class="absolute -top-1 md:-top-2 left-1/2 -translate-x-1/2 text-base md:text-xl 2xl:text-2xl">👑</div>
-
     <!-- Player name -->
     <div class="font-semibold text-[10px] md:text-xs lg:text-sm truncate max-w-full">
       {{ player.name }}

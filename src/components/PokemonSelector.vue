@@ -29,6 +29,14 @@ const dragStartY = ref(0)
 const dragCurrentY = ref(0)
 const isDragging = ref(false)
 
+function normalizeSearchValue(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
 // Touch event handlers for drag-to-dismiss
 function handleTouchStart(e: TouchEvent) {
   const touch = e.touches[0]
@@ -89,6 +97,15 @@ watch(open, async (isOpen) => {
       document.documentElement.style.setProperty('--pokemon-selector-width', `${width}px`)
     }
   }
+
+  if (isOpen) {
+    await nextTick()
+    setTimeout(() => {
+      const searchInput = document.querySelector<HTMLElement>('[data-slot="command-input"]')
+      searchInput?.focus()
+    }, 0)
+  }
+
   // Reset display count when closing
   if (!isOpen) {
     displayCount.value = 30
@@ -96,13 +113,18 @@ watch(open, async (isOpen) => {
 })
 
 const filteredSpecies = computed(() => {
-  if (!searchQuery.value) {
+  const normalizedQuery = normalizeSearchValue(searchQuery.value)
+
+  if (!normalizedQuery) {
     return props.speciesSelection.slice(0, displayCount.value)
   }
+
   return props.speciesSelection
-    .filter((pokemon) =>
-      pokemon.label.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
+    .filter((pokemon) => {
+      const normalizedLabel = normalizeSearchValue(pokemon.label)
+      const normalizedValue = normalizeSearchValue(pokemon.value)
+      return normalizedLabel.includes(normalizedQuery) || normalizedValue.includes(normalizedQuery)
+    })
     .slice(0, displayCount.value)
 })
 
@@ -173,7 +195,9 @@ function selectPokemon(value: string) {
         </SheetHeader>
       </div>
       <Command class="flex-1 flex flex-col min-h-0">
-        <CommandInput v-model="searchQuery" class="h-8 w-full text-xs sm:text-sm" :placeholder="t('searchPlaceholder')" />
+        <div class="border-b px-3 py-2">
+          <CommandInput v-model="searchQuery" class="h-8 w-full text-xs sm:text-sm" :placeholder="t('searchPlaceholder')" />
+        </div>
         <CommandList class="flex-1 overflow-y-auto max-h-full" @scroll="handleScroll">
           <CommandEmpty v-if="filteredSpecies.length === 0" class="text-xs sm:text-sm">{{ t('noResults') }}</CommandEmpty>
           <CommandGroup v-else>
@@ -181,6 +205,7 @@ function selectPokemon(value: string) {
               v-for="pokemon in filteredSpecies"
               :key="pokemon.value"
               :value="pokemon.value"
+              :text-value="`${pokemon.label} ${pokemon.value}`"
               class="cursor-pointer text-xs sm:text-sm flex items-center gap-2"
               @select="(ev: any) => selectPokemon(ev.detail.value as string)"
             >
@@ -212,7 +237,9 @@ function selectPokemon(value: string) {
       </PopoverTrigger>
       <PopoverContent class="p-0 !w-[var(--pokemon-selector-width)]" side="top" align="center" :side-offset="8">
         <Command>
-          <CommandInput v-model="searchQuery" class="h-9 lg:h-10 2xl:h-11 w-full text-sm lg:text-base 2xl:text-lg" :placeholder="t('searchPlaceholder')" />
+          <div class="border-b px-3 py-2">
+            <CommandInput v-model="searchQuery" class="h-9 lg:h-10 2xl:h-11 w-full text-sm lg:text-base 2xl:text-lg" :placeholder="t('searchPlaceholder')" />
+          </div>
           <CommandList @scroll="handleScroll">
             <CommandEmpty v-if="filteredSpecies.length === 0" class="text-sm lg:text-base 2xl:text-lg">{{ t('noResults') }}</CommandEmpty>
             <CommandGroup v-else>
@@ -220,6 +247,7 @@ function selectPokemon(value: string) {
                 v-for="pokemon in filteredSpecies"
                 :key="pokemon.value"
                 :value="pokemon.value"
+                :text-value="`${pokemon.label} ${pokemon.value}`"
                 class="cursor-pointer text-sm lg:text-base 2xl:text-lg flex items-center gap-2"
                 @select="(ev: any) => selectPokemon(ev.detail.value as string)"
               >

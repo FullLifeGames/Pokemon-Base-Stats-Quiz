@@ -1,13 +1,15 @@
 # Pokémon Quiz Hub
 
-A fully-featured interactive quiz application with **three different quiz modes** to test your Pokémon knowledge: Base Stats, Learnset, and Damage Calculation. Built with modern web technologies and comprehensive testing capabilities.
+[![CI](https://github.com/FullLifeGames/Pokemon-Base-Stats-Quiz/actions/workflows/ci.yml/badge.svg)](https://github.com/FullLifeGames/Pokemon-Base-Stats-Quiz/actions/workflows/ci.yml)
+
+A fully-featured interactive quiz application with **five quiz modes** to test your Pokémon knowledge: Base Stats, Learnset, Damage Calculation, Weight, and Height. Built with modern web technologies and comprehensive testing capabilities.
 
 ## 🎮 Features
 
 ### Game Modes
 
 #### Solo Quiz Modes
-Choose from three different quiz types:
+Choose from five different quiz types:
 
 **1. Base Stats Quiz**
 - **Base Stats Recognition**: Displays HP, Attack, Defense, Special Attack, Special Defense, and Speed stats
@@ -35,12 +37,22 @@ Choose from three different quiz types:
 - **Detailed Display**: Shows abilities, items, natures, EVs, and Tera types for each scenario
 - **Field Effects**: Automatically detects and applies weather (Sun, Rain, Sand, Snow) and terrain (Grassy, Electric, Psychic, Misty) from Pokémon abilities, with defender's ability taking precedence
 
+**4. Weight Quiz**
+- **Numeric Guessing**: Guess Pokémon weight in kilograms
+- **Closest-Value Gameplay**: Result feedback compares your numeric guess to the correct value
+- **Shared Value UI**: Uses the same reusable value option grid pattern as VS mode
+
+**5. Height Quiz**
+- **Numeric Guessing**: Guess Pokémon height in meters
+- **Closest-Value Gameplay**: Result feedback compares your numeric guess to the correct value
+- **Shared Value UI**: Uses the same reusable value option grid pattern as VS mode
+
 #### VS Mode (Multiplayer)
 - **Peer-to-Peer Multiplayer**: Real-time competitive gameplay via WebRTC (PeerJS)
 - **Room-Based Matchmaking**: Create or join rooms with 6-character codes
 - **N-Player Support**: Unlimited players can compete simultaneously (not just 1v1)
 - **Multiple Roles**: Play as Host, Player, or Spectator
-- **Three Quiz Modes**: Choose between Base Stats, Learnset, or Damage Calc
+- **Five Quiz Modes**: Choose between Base Stats, Learnset, Damage Calc, Weight, or Height
 - **Time-Based Scoring**: Earn 100-1000 points per correct answer based on speed
   - Instant answers: 1000 points
   - Linear decay to 100 points at time limit
@@ -53,24 +65,24 @@ Choose from three different quiz types:
 - **Per-Player Round Results**: Everyone gets points based on their speed and correctness
 - **Leaderboard**: Real-time score tracking sorted by total points
 - **Host-Only Restart**: Only the host can restart matches after completion
-- **Answer Locking**: First submission is final (prevents timing manipulation)
+- **Answer Updates Before Lock-In**: You can change your submitted answer until all players have answered
 - **Session Persistence**: Automatically reconnect if disconnected
 - **Spectator Mode**: Watch matches in real-time without participating (unlimited)
 - **Forfeit Option**: Gracefully exit matches (game ends if less than 2 players remain)
 
 ### Customization & Settings
-- **Quiz Mode Selection**: Choose between Base Stats, Learnset, or Damage Calc
+- **Quiz Mode Selection**: Choose between Base Stats, Learnset, Damage Calc, Weight, or Height
 - **Generation Filters**: Set minimum and maximum Pokémon generations (1-9)
 - **Evolution Stage Filter**: Option to show only fully evolved Pokémon
 - **Mega Evolution Filter**: Include or exclude Mega Evolutions
 - **Win Condition**: Configure custom win scores (default: 10 correct for solo)
 - **VS Mode Settings** (Host only):
-  - **Quiz Mode**: Select Base Stats, Learnset, or Damage Calc
+   - **Quiz Mode**: Select Base Stats, Learnset, Damage Calc, Weight, or Height
   - **Game Mode**: Choose between Rounds or Target Score
   - **Total Rounds**: Set number of rounds for Rounds mode (1-50, default: 10)
   - **Target Score**: Set winning score for Target Score mode (1000-50000, default: 5000)
   - **Time Limit**: Required per-round timer (10-300 seconds, default: 30)
-- **Hint Toggle**: Enable/disable hint system in solo mode (Base Stats & Learnset)
+- **Hint Toggle**: Enable/disable hint system (hidden for Weight and Height modes)
 - **Dynamic Configuration**: Adjust quiz parameters on-the-fly (host only in VS Mode)
 - **Settings Reactivity**: All quiz modes respond instantly to settings changes
 
@@ -80,7 +92,7 @@ Choose from three different quiz types:
 - **Translated Pokémon Names**: 1350+ German Pokémon names from PokéAPI
 
 ### User Interface
-- **Dark/Light Mode**: Toggle theme with animated transitions
+- **Dark/Light Mode**: Dark mode by default with persisted user preference and animated transitions
 - **Responsive Design**: Works seamlessly on mobile, tablet, and desktop
 - **Modern Components**: Built with shadcn-vue for polished UI
 - **Congratulations Dialog**: Celebrates quiz completion with final stats
@@ -133,7 +145,7 @@ Choose from three different quiz types:
 ```
 src/
 ├── components/
-│   ├── __tests__/              # Unit tests (310+ tests)
+│   ├── __tests__/              # Unit tests (300+ tests)
 │   ├── BaseStatQuiz.vue        # Base stats quiz mode
 │   ├── LearnsetQuiz.vue        # Learnset quiz mode
 │   ├── DamageQuiz.vue          # Damage calc quiz mode
@@ -272,18 +284,21 @@ For detailed testing information, see [TESTING.md](./TESTING.md)
    - **Base Stats**: Identify Pokémon from their stats
    - **Learnset**: Identify Pokémon from their learnable moves
    - **Damage Calc**: Guess damage percentage from battle scenarios
+   - **Weight**: Guess Pokémon weight value
+   - **Height**: Guess Pokémon height value
 
 2. **Configure Settings** (Left Sidebar):
    - Set generation range (minimum & maximum)
    - Toggle fully evolved Pokémon only
    - Toggle Mega Evolution inclusion
    - Set win score goal
-   - Enable/disable hints (Base Stats & Learnset modes)
+   - Enable/disable hints (hidden in Weight/Height modes)
 
 3. **Play the Quiz**:
    - **Base Stats**: View stats, request hints, select Pokémon
    - **Learnset**: View moves by type, request hints, select Pokémon
    - **Damage Calc**: View battle scenario, use slider (0-110%), submit guess
+   - **Weight/Height**: Choose the closest numeric value from options
    - Watch score update and timer count
 
 4. **Win the Quiz**:
@@ -297,7 +312,7 @@ For detailed testing information, see [TESTING.md](./TESTING.md)
 1. **Select VS Mode** from the mode selection screen
 2. **Click "Create Room"** to generate a 6-character room code
 3. **Configure Settings** (Host only):
-   - Choose quiz mode (Base Stats, Learnset, or Damage Calc)
+   - Choose quiz mode (Base Stats, Learnset, Damage Calc, Weight, or Height)
    - Set generation range
    - Toggle fully evolved Pokémon only
    - Toggle Mega Evolution inclusion
@@ -325,17 +340,18 @@ For detailed testing information, see [TESTING.md](./TESTING.md)
    - **Base Stats**: View Pokémon stats
    - **Learnset**: View learnable moves
    - **Damage Calc**: View battle scenario with slider
+   - **Weight/Height**: View a Pokémon and select the closest numeric value
 3. **Submit Answer**: 
    - **Base Stats & Learnset**: Select Pokémon from list
    - **Damage Calc**: Adjust slider (0-110%), submit guess
-   - Locked after first submission
+   - **Weight/Height**: Select numeric value from options
+   - Submitted answers can be changed until all players have answered
 4. **Time-Based Scoring**: 
    - Correct answers: 1000 points (instant) → 100 points (at deadline)
    - Damage mode: ±5% tolerance
    - Incorrect answers: 0 points
    - All players can score, not just first to answer
 5. **Round Results**: See all players' scores for that round
-   - Top scorer gets a crown indicator
    - Individual round scores displayed (+X points)
 6. **Next Round**: Automatic advance after 3 seconds
 7. **Match End**: 
@@ -348,7 +364,7 @@ For detailed testing information, see [TESTING.md](./TESTING.md)
 - **N-Player Scaling**: UI adapts for 2-10+ players with compact player cards
 - **Live Player Status**: See how many players have answered each round
 - **Fair Timing**: All timestamps recorded by host to prevent clock manipulation
-- **Answer Locking**: Cannot change answer after submission (prevents gaming the system)
+- **Answer Updates**: Players may retract and resubmit before the round locks (once all players answer)
 - **Session Recovery**: Automatically reconnect if disconnected
 - **Forfeit**: Gracefully exit with confirmation (game ends if less than 2 players remain)
 - **Spectator View**: Watch matches without participating
@@ -386,7 +402,7 @@ The app uses @pkmn/dex for all Pokémon data. To update:
 
 ## 🔍 Key Features Explained
 
-### Three Quiz Modes
+### Five Quiz Modes
 
 **Base Stats Quiz**
 - Identify Pokémon from HP, Attack, Defense, Special Attack, Special Defense, and Speed
@@ -416,6 +432,11 @@ The app uses @pkmn/dex for all Pokémon data. To update:
   - Defender's ability takes precedence when both Pokémon have conflicting field effects
   - Active effects displayed with icons (☀️🌧️🌪️❄️ for weather, 🌿⚡🔮🌸 for terrain)
   - Field effects integrated into damage calculations via @smogon/calc
+
+**Weight & Height Quizzes**
+- Identify Pokémon by selecting the closest numeric value for weight/height
+- Uses shared value-option UI across solo and VS for consistent interaction
+- Supports the same generation and form filters as other quiz modes
 
 ### Smart Selection System
 The Base Stats quiz doesn't require exact Pokémon names. If a Pokémon has identical base stats to the displayed stats, it's considered correct. This allows for legitimate alternatives.
@@ -502,7 +523,7 @@ This project was developed as an **experiment with AI-assisted coding** using Gi
 
 The codebase serves as a reference for combining AI assistance with best practices in web development. All features were implemented iteratively with quality assurance and comprehensive testing. The VS Mode showcases advanced real-time multiplayer capabilities entirely in the browser without requiring a backend server, now supporting unlimited players with fair time-based scoring. Recent major enhancements include:
 
-- **Three Quiz Modes**: Base Stats (original), Learnset (move recognition), and Damage Calc (battle scenario prediction)
+- **Five Quiz Modes**: Base Stats, Learnset, Damage Calc, Weight, and Height
 - **Advanced Damage Calculations**: Integration with @smogon/calc for realistic competitive battle damage using 4798 Pokémon across Gen 1-9
 - **Dynamic Data Loading**: Lazy-loading with code-splitting per generation (saves ~3.6MB total, loads only needed gen)
 - **Smart Filtering**: CAP Pokémon exclusion, non-standard metagame filtering, empty learnset handling

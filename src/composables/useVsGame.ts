@@ -4,6 +4,17 @@ import { usePeerConnection } from './usePeerConnection'
 import { useQuizLogic, type SpeciesFilterOptions } from './useQuizLogic'
 import { useLearnsetData } from './useLearnsetData'
 import { useDamageCalc } from './useDamageCalc'
+import {
+  applyPlayerAnswer,
+  applyRoundResults,
+  createRoundForQuizMode,
+  getClosestGuessScore,
+  getDamageDistance,
+  isValueGuessWithinTolerance,
+  isValueMode,
+  resetMatchScores,
+  resetRoundAnswerState,
+} from '@/lib/vsGameRoundUtils'
 import type {
   VsGameState,
   VsPlayer,
@@ -155,6 +166,13 @@ export function useVsGame() {
     }
   }
 
+  function clearPlayerAnswer(player: VsPlayer) {
+    player.hasAnswered = false
+    player.lastGuess = null
+    player.lastGuessCorrect = null
+    player.lastGuessTimestamp = null
+  }
+
   function getFullRoomState(): VsGameRoom {
     return {
       roomCode: roomCode.value,
@@ -253,13 +271,7 @@ export function useVsGame() {
         if (savedState && savedState.roomCode === session.roomCode) {
           restoreFromRoom(savedState)
           if (gameState.value === 'playing' && currentRound.value) {
-            // Reset answer states so the round can be replayed fairly
-            for (const p of players.value) {
-              p.hasAnswered = false
-              p.lastGuess = null
-              p.lastGuessCorrect = null
-              p.lastGuessTimestamp = null
-            }
+            resetRoundAnswerState(players.value)
             roundStartTime = Date.now()
             startRoundTimer()
           }
@@ -350,14 +362,7 @@ export function useVsGame() {
           currentRound.value = msg.round
           roundNumber.value = msg.round.number
           gameState.value = 'playing'
-          // Reset all player answer states
-          for (const p of players.value) {
-            p.hasAnswered = false
-            p.lastGuess = null
-            p.lastGuessCorrect = null
-            p.lastGuessTimestamp = null
-            p.roundScore = 0
-          }
+          resetRoundAnswerState(players.value)
         }
         break
 
@@ -365,10 +370,7 @@ export function useVsGame() {
         if (isHosting.value) {
           const player = players.value.find(p => p.id === msg.playerId)
           if (player) {
-            player.hasAnswered = true
-            player.lastGuess = msg.pokemonId
-            player.lastGuessCorrect = msg.correct
-            player.lastGuessTimestamp = Date.now() // Host records arrival time (reset on re-answer)
+            applyPlayerAnswer(player, msg.pokemonId, msg.correct)
 
             // Notify all players that someone answered
             sendToAll({ type: 'player-answered', playerId: msg.playerId })
@@ -385,10 +387,7 @@ export function useVsGame() {
         if (isHosting.value) {
           const player = players.value.find(p => p.id === msg.playerId)
           if (player) {
-            player.hasAnswered = true
-            player.lastGuess = String(msg.damagePercent)
-            player.lastGuessCorrect = msg.correct
-            player.lastGuessTimestamp = Date.now()
+            applyPlayerAnswer(player, String(msg.damagePercent), msg.correct)
 
             sendToAll({ type: 'player-answered', playerId: msg.playerId })
             broadcastToSpectators()
@@ -400,11 +399,51 @@ export function useVsGame() {
         }
         break
 
+      case 'numeric-guess':
+        if (isHosting.value) {
+          const player = players.value.find(p => p.id === msg.playerId)
+          const quizMode = settings.value.quizMode ?? 'base-stat'
+
+          if (player && isValueMode(quizMode) && currentRound.value?.targetValue !== undefined) {
+            const isWithinRange = isValueGuessWithinTolerance(quizMode, currentRound.value.targetValue, msg.value)
+
+            applyPlayerAnswer(player, String(msg.value), isWithinRange)
+
+            sendToAll({ type: 'player-answered', playerId: msg.playerId })
+            broadcastToSpectators()
+
+            if (allPlayersAnswered.value) {
+              resolveRound()
+            }
+          }
+        }
+        break
+
+      case 'retract-answer':
+        if (isHosting.value && gameState.value === 'playing') {
+          const player = players.value.find(p => p.id === msg.playerId)
+          if (player) {
+            clearPlayerAnswer(player)
+            sendToAll({ type: 'player-unanswered', playerId: msg.playerId })
+            broadcastToSpectators()
+          }
+        }
+        break
+
       case 'player-answered':
         if (!isHosting.value) {
           const player = players.value.find(p => p.id === msg.playerId)
           if (player) {
             player.hasAnswered = true
+          }
+        }
+        break
+
+      case 'player-unanswered':
+        if (!isHosting.value) {
+          const player = players.value.find(p => p.id === msg.playerId)
+          if (player) {
+            clearPlayerAnswer(player)
           }
         }
         break
@@ -556,10 +595,7 @@ export function useVsGame() {
     gameState.value = 'countdown'
 
     // Reset all player scores
-    for (const p of players.value) {
-      p.score = 0
-      p.roundScore = 0
-    }
+    resetMatchScores(players.value)
     roundNumber.value = 0
     elapsedTime.value = 0
 
@@ -590,58 +626,20 @@ export function useVsGame() {
     roundNumber.value++
     roundStartTime = Date.now()
 
-    let round: VsRound
-
-    if (quizMode === 'damage') {
-      // Damage mode: generate a damage scenario (no specific target Pokémon)
-      await waitDamageReady()
-      const scenario = generateDamageScenario()
-      round = {
-        number: roundNumber.value,
-        pokemonId: scenario ? scenario.attackerName : 'Unknown',
-        pokemonTypes: [],
-        pokemonAbilities: [],
-        timeRemaining: settings.value.timeLimit,
-        hintLevel: 0,
-        results: [],
-        damageScenario: scenario ?? undefined,
-      }
-    } else {
-      // Base stat & learnset modes both need a random Pokémon
-      let pokemon
-      let learnsetMoves
-
-      if (quizMode === 'learnset') {
-        const result = await getRandomPokemonWithMoves(generateRandomPokemon)
-        pokemon = result.pokemon
-        learnsetMoves = result.moves
-      } else {
-        pokemon = generateRandomPokemon()
-      }
-
-      round = {
-        number: roundNumber.value,
-        pokemonId: pokemon.name,
-        pokemonTypes: [...pokemon.types],
-        pokemonAbilities: Object.values(pokemon.abilities).filter(a => a) as string[],
-        timeRemaining: settings.value.timeLimit,
-        hintLevel: 0,
-        results: [],
-        ...(learnsetMoves && { learnsetMoves }),
-      }
-    }
+    const round = await createRoundForQuizMode({
+      quizMode,
+      roundNumber: roundNumber.value,
+      timeLimit: settings.value.timeLimit,
+      generateRandomPokemon,
+      getRandomPokemonWithMoves,
+      waitDamageReady,
+      generateDamageScenario,
+    })
 
     currentRound.value = round
     gameState.value = 'playing'
 
-    // Reset answer states
-    for (const p of players.value) {
-      p.hasAnswered = false
-      p.lastGuess = null
-      p.lastGuessCorrect = null
-      p.lastGuessTimestamp = null
-      p.roundScore = 0
-    }
+    resetRoundAnswerState(players.value)
 
     sendToAll({ type: 'new-round', round })
     broadcastToSpectators()
@@ -653,6 +651,60 @@ export function useVsGame() {
       elapsedTimer = setInterval(() => {
         elapsedTime.value++
       }, 1000)
+    }
+  }
+
+  // --- Player: Submit Numeric Guess (weight/height) ---
+  function submitNumericGuess(value: number) {
+    if (!currentRound.value || gameState.value !== 'playing') return
+    if (myRole.value === 'spectator') return
+
+    const myPlayer = me.value
+    if (!myPlayer) return
+
+    const quizMode = settings.value.quizMode ?? 'base-stat'
+    if (!isValueMode(quizMode)) return
+    if (currentRound.value.targetValue === undefined) return
+
+    const isWithinRange = isValueGuessWithinTolerance(quizMode, currentRound.value.targetValue, value)
+
+    if (isHosting.value) {
+      applyPlayerAnswer(myPlayer, String(value), isWithinRange)
+
+      sendToAll({ type: 'player-answered', playerId: myPlayerId.value })
+      broadcastToSpectators()
+
+      if (allPlayersAnswered.value) {
+        resolveRound()
+      }
+    } else {
+      myPlayer.hasAnswered = true
+      myPlayer.lastGuess = String(value)
+      myPlayer.lastGuessCorrect = isWithinRange
+
+      sendToAll({
+        type: 'numeric-guess',
+        playerId: myPlayerId.value,
+        value,
+        timestamp: Date.now(),
+      })
+    }
+  }
+
+  function retractAnswer() {
+    if (!currentRound.value || gameState.value !== 'playing') return
+    if (myRole.value === 'spectator') return
+
+    const myPlayer = me.value
+    if (!myPlayer || !myPlayer.hasAnswered) return
+
+    clearPlayerAnswer(myPlayer)
+
+    if (isHosting.value) {
+      sendToAll({ type: 'player-unanswered', playerId: myPlayerId.value })
+      broadcastToSpectators()
+    } else {
+      sendToAll({ type: 'retract-answer', playerId: myPlayerId.value })
     }
   }
 
@@ -733,10 +785,7 @@ export function useVsGame() {
     }
 
     if (isHosting.value) {
-      myPlayer.hasAnswered = true
-      myPlayer.lastGuess = pokemonId
-      myPlayer.lastGuessCorrect = correct
-      myPlayer.lastGuessTimestamp = Date.now()
+      applyPlayerAnswer(myPlayer, pokemonId, correct)
 
       sendToAll({ type: 'player-answered', playerId: myPlayerId.value })
       broadcastToSpectators()
@@ -774,10 +823,7 @@ export function useVsGame() {
     const correct = isDamageGuessCorrect(damagePercent, scenario.damageRange)
 
     if (isHosting.value) {
-      myPlayer.hasAnswered = true
-      myPlayer.lastGuess = String(damagePercent)
-      myPlayer.lastGuessCorrect = correct
-      myPlayer.lastGuessTimestamp = Date.now()
+      applyPlayerAnswer(myPlayer, String(damagePercent), correct)
 
       sendToAll({ type: 'player-answered', playerId: myPlayerId.value })
       broadcastToSpectators()
@@ -806,6 +852,107 @@ export function useVsGame() {
     stopRoundTimer()
 
     const timeLimit = settings.value.timeLimit
+    const quizMode = settings.value.quizMode ?? 'base-stat'
+
+    if (quizMode === 'damage') {
+      const playerDistance = new Map<string, number>()
+
+      for (const player of players.value) {
+        const guessedValue = player.lastGuess !== null ? Number.parseFloat(player.lastGuess) : Number.NaN
+        if (!Number.isFinite(guessedValue)) {
+          playerDistance.set(player.id, Number.POSITIVE_INFINITY)
+          continue
+        }
+
+        if (quizMode === 'damage') {
+          const scenario = currentRound.value.damageScenario
+          if (!scenario) {
+            playerDistance.set(player.id, Number.POSITIVE_INFINITY)
+            continue
+          }
+          playerDistance.set(player.id, getDamageDistance(guessedValue, scenario.damageRange))
+          continue
+        }
+
+        playerDistance.set(player.id, Number.POSITIVE_INFINITY)
+      }
+
+      const finiteDistances = [...playerDistance.values()].filter(Number.isFinite)
+      const bestDistance = finiteDistances.length > 0 ? Math.min(...finiteDistances) : Number.POSITIVE_INFINITY
+
+      const results: PlayerRoundResult[] = players.value.map(player => {
+        const distance = playerDistance.get(player.id) ?? Number.POSITIVE_INFINITY
+        const guessedValue = player.lastGuess !== null ? Number.parseFloat(player.lastGuess) : Number.NaN
+
+        let isCorrect = false
+        const scenario = currentRound.value?.damageScenario
+        isCorrect = Number.isFinite(guessedValue) && !!scenario && isDamageGuessCorrect(guessedValue, scenario.damageRange)
+
+        const score = isCorrect ? getClosestGuessScore(distance, bestDistance, quizMode) : 0
+
+        return {
+          playerId: player.id,
+          playerName: player.name,
+          guess: player.lastGuess,
+          correct: isCorrect,
+          timestamp: player.lastGuessTimestamp,
+          score,
+        }
+      })
+
+      applyRoundResults(players.value, results)
+
+      currentRound.value.results = results
+      gameState.value = 'round-result'
+
+      sendToAll({ type: 'round-result', results, correctPokemon: currentRound.value.pokemonId })
+      broadcastToSpectators()
+      saveGameState(getFullRoomState())
+
+      checkMatchEnd()
+      return
+    }
+
+    if (isValueMode(quizMode)) {
+      const targetValue = currentRound.value.targetValue
+
+      const results: PlayerRoundResult[] = players.value.map(player => {
+        const guessedValue = player.lastGuess !== null ? Number.parseFloat(player.lastGuess) : Number.NaN
+        const isCorrect =
+          targetValue !== undefined
+          && Number.isFinite(guessedValue)
+          && isValueGuessWithinTolerance(quizMode, targetValue, guessedValue)
+
+        let timeRemaining = 0
+        if (isCorrect && player.lastGuessTimestamp) {
+          const timeUsed = (player.lastGuessTimestamp - roundStartTime) / 1000
+          timeRemaining = Math.max(0, timeLimit - timeUsed)
+        }
+
+        const score = calculateRoundScore(timeRemaining, timeLimit, isCorrect)
+
+        return {
+          playerId: player.id,
+          playerName: player.name,
+          guess: player.lastGuess,
+          correct: isCorrect,
+          timestamp: player.lastGuessTimestamp,
+          score,
+        }
+      })
+
+      applyRoundResults(players.value, results)
+
+      currentRound.value.results = results
+      gameState.value = 'round-result'
+
+      sendToAll({ type: 'round-result', results, correctPokemon: currentRound.value.pokemonId })
+      broadcastToSpectators()
+      saveGameState(getFullRoomState())
+
+      checkMatchEnd()
+      return
+    }
 
     const results: PlayerRoundResult[] = players.value.map(player => {
       const isCorrect = player.lastGuessCorrect === true
@@ -826,14 +973,7 @@ export function useVsGame() {
       }
     })
 
-    // Update player scores
-    for (const result of results) {
-      const player = players.value.find(p => p.id === result.playerId)
-      if (player) {
-        player.roundScore = result.score
-        player.score += result.score
-      }
-    }
+    applyRoundResults(players.value, results)
 
     currentRound.value.results = results
     gameState.value = 'round-result'
@@ -884,14 +1024,8 @@ export function useVsGame() {
   function restartGame() {
     if (!isHosting.value) return
 
-    for (const p of players.value) {
-      p.score = 0
-      p.roundScore = 0
-      p.hasAnswered = false
-      p.lastGuess = null
-      p.lastGuessCorrect = null
-      p.lastGuessTimestamp = null
-    }
+    resetMatchScores(players.value)
+    resetRoundAnswerState(players.value)
 
     roundNumber.value = 0
     elapsedTime.value = 0
@@ -1030,6 +1164,8 @@ export function useVsGame() {
     startGame,
     submitGuess,
     submitDamageGuess,
+    submitNumericGuess,
+    retractAnswer,
     restartGame,
     updateSettings,
     leaveGame,

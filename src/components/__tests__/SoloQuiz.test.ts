@@ -39,6 +39,9 @@ describe('SoloQuiz.vue', () => {
           DamageQuiz: {
             template: '<div>DamageQuiz</div>',
           },
+          PokemonValueQuiz: {
+            template: '<div>PokemonValueQuiz</div>',
+          },
         },
       },
     })

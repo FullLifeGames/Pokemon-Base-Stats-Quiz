@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -77,7 +77,11 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
   { value: 'base-stat', labelKey: 'sidebar.quizModes.baseStat' },
   { value: 'learnset', labelKey: 'sidebar.quizModes.learnset' },
   { value: 'damage', labelKey: 'sidebar.quizModes.damage' },
+  { value: 'weight', labelKey: 'sidebar.quizModes.weight' },
+  { value: 'height', labelKey: 'sidebar.quizModes.height' },
 ]
+
+const showHintsToggle = computed(() => props.settings.quizMode !== 'weight' && props.settings.quizMode !== 'height')
 </script>
 
 <template>
@@ -266,7 +270,7 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
                 </AccordionTrigger>
                 <AccordionContent class="space-y-3 pt-2">
                   <!-- Hints Enabled -->
-                  <div class="flex items-center gap-2">
+                  <div v-if="showHintsToggle" class="flex items-center gap-2">
                     <input
                       type="checkbox"
                       :checked="settings.hintsEnabled"

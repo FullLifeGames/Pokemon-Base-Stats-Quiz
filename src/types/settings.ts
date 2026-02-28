@@ -4,7 +4,7 @@ import type { SpeciesFilterOptions } from '@/composables/useQuizLogic'
  * Available quiz modes.
  * Extend this union when adding new quiz types.
  */
-export type QuizMode = 'base-stat' | 'learnset' | 'damage'
+export type QuizMode = 'base-stat' | 'learnset' | 'damage' | 'weight' | 'height'
 
 /**
  * Quiz settings configuration

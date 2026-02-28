@@ -58,7 +58,7 @@ function categoryIcon(category: MoveInfo['category']): string {
 
 <template>
   <div v-if="moves" class="flex flex-col gap-2 md:gap-3">
-    <p class="text-xs md:text-sm text-muted-foreground">
+    <p class="text-sm md:text-sm text-muted-foreground">
       {{ totalMoveCount }} moves
     </p>
     <div class="max-h-[50vh] overflow-y-auto pr-1 space-y-2 md:space-y-3">
@@ -71,12 +71,12 @@ function categoryIcon(category: MoveInfo['category']): string {
         <!-- Type header -->
         <div class="flex items-center gap-2 mb-1.5 md:mb-2">
           <span
-            class="text-[10px] md:text-xs font-bold uppercase px-2 py-0.5 rounded-full"
+            class="text-xs md:text-xs font-bold uppercase px-2 py-0.5 rounded-full"
             :class="[colors.bg, colors.text]"
           >
             {{ type }}
           </span>
-          <span class="text-[10px] md:text-xs text-muted-foreground">
+          <span class="text-xs md:text-xs text-muted-foreground">
             ({{ typeMoves.length }})
           </span>
         </div>
@@ -86,13 +86,13 @@ function categoryIcon(category: MoveInfo['category']): string {
           <span
             v-for="move in typeMoves"
             :key="move.name"
-            class="inline-flex items-center gap-1 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-md"
+            class="inline-flex items-center gap-1 text-xs md:text-xs px-2 md:px-2 py-1 md:py-1 rounded-md"
             :class="[colors.bg, colors.text]"
             :title="`${move.name} — ${move.category}${move.basePower ? ` (${move.basePower} BP)` : ''}`"
           >
-            <span class="text-[8px] md:text-[10px]">{{ categoryIcon(move.category) }}</span>
+            <span class="text-[10px] md:text-[10px]">{{ categoryIcon(move.category) }}</span>
             {{ move.name }}
-            <span v-if="move.basePower" class="opacity-60 text-[8px] md:text-[10px]">{{ move.basePower }}</span>
+            <span v-if="move.basePower" class="opacity-60 text-[10px] md:text-[10px]">{{ move.basePower }}</span>
           </span>
         </div>
       </div>

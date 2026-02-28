@@ -31,6 +31,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { useLocalePreference } from '@/composables/useLocalePreference'
 import ModeToggle from './ModeToggle.vue'
 
 const { locale, t } = useI18n()
@@ -48,11 +49,7 @@ const emit = defineEmits<{
 }>()
 
 const appTitle = computed(() => locale.value === 'en' ? 'Pokémon Quiz Hub' : 'Pokémon-Quiz-Hub')
-
-const changeLocale = (newLocale: string) => {
-  locale.value = newLocale
-  localStorage.setItem('locale', newLocale)
-}
+const { changeLocale } = useLocalePreference(locale)
 
 const updateGeneration = (newGeneration: number) => {
   emit('update:settings', { ...props.settings, generation: newGeneration as GenerationNum })
@@ -97,6 +94,8 @@ const updateQuizMode = (mode: QuizMode) => {
     'base-stat': '/solo/base-stats',
     'learnset': '/solo/learnset',
     'damage': props.settings.vgc ? '/solo/damage/vgc' : '/solo/damage',
+    'weight': '/solo/weight',
+    'height': '/solo/height',
   }
   router.push(routeMap[mode])
 }
@@ -105,7 +104,11 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
   { value: 'base-stat', labelKey: 'sidebar.quizModes.baseStat' },
   { value: 'learnset', labelKey: 'sidebar.quizModes.learnset' },
   { value: 'damage', labelKey: 'sidebar.quizModes.damage' },
+  { value: 'weight', labelKey: 'sidebar.quizModes.weight' },
+  { value: 'height', labelKey: 'sidebar.quizModes.height' },
 ]
+
+const showHintsToggle = computed(() => props.settings.quizMode !== 'weight' && props.settings.quizMode !== 'height')
 </script>
 
 <template>
@@ -235,7 +238,7 @@ const quizModes: { value: QuizMode; labelKey: string }[] = [
                       </div>
 
                       <!-- Hints Enabled -->
-                      <div class="flex items-center gap-2">
+                      <div v-if="showHintsToggle" class="flex items-center gap-2">
                         <input 
                           type="checkbox" 
                           :checked="settings.hintsEnabled" 

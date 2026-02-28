@@ -10,14 +10,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Globe } from 'lucide-vue-next'
+import { useLocalePreference } from '@/composables/useLocalePreference'
 
 const { t, locale } = useI18n()
 const router = useRouter()
-
-const changeLocale = (newLocale: string) => {
-  locale.value = newLocale
-  localStorage.setItem('locale', newLocale)
-}
+const { changeLocale } = useLocalePreference(locale)
 </script>
 
 <template>

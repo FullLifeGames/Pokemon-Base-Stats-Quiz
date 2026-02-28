@@ -5,6 +5,7 @@ import AppSidebar from './AppSidebar.vue'
 import BaseStatQuiz from './BaseStatQuiz.vue'
 import LearnsetQuiz from './LearnsetQuiz.vue'
 import DamageQuiz from './DamageQuiz.vue'
+import PokemonValueQuiz from './PokemonValueQuiz.vue'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import type { QuizSettings, QuizMode } from '@/types/settings'
 import { defaultSettings } from '@/types/settings'
@@ -34,7 +35,7 @@ watch(
   <SidebarProvider>
     <AppSidebar :settings="settings" @update:settings="(value) => settings = value" />
     <SidebarInset>
-      <header><SidebarTrigger /></header>
+      <header><SidebarTrigger class="cursor-pointer" /></header>
       <div class="flex flex-1 flex-col">
         <div class="@container/main flex flex-1 flex-col">
           <div class="flex flex-col">
@@ -42,6 +43,11 @@ watch(
               <BaseStatQuiz v-if="settings.quizMode === 'base-stat'" :settings="settings" />
               <LearnsetQuiz v-else-if="settings.quizMode === 'learnset'" :settings="settings" />
               <DamageQuiz v-else-if="settings.quizMode === 'damage'" :settings="settings" />
+              <PokemonValueQuiz
+                v-else-if="settings.quizMode === 'weight' || settings.quizMode === 'height'"
+                :settings="settings"
+                :mode="settings.quizMode"
+              />
             </div>
           </div>
         </div>
