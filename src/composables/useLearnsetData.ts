@@ -129,11 +129,42 @@ export function useLearnsetData(
     return { pokemon, moves }
   }
 
+  /**
+   * Compute a comparable signature string from a MovesByType record.
+   * Two Pokémon with the same learnset will produce the same signature.
+   */
+  function getLearnsetSignature(movesByType: MovesByType): string {
+    return Object.values(movesByType)
+      .flat()
+      .map(m => m.name)
+      .sort()
+      .join(',')
+  }
+
+  /**
+   * Check whether a guessed Pokémon has the same learnset as the target.
+   * Compares the learnset signature of the guessed species against the
+   * already-loaded target moves, so only one async fetch is needed.
+   */
+  async function hasMatchingLearnset(
+    guessedSpecies: Species,
+    targetMoves: MovesByType,
+  ): Promise<boolean> {
+    try {
+      const guessedMoves = await getLearnsetMoves(guessedSpecies)
+      return getLearnsetSignature(guessedMoves) === getLearnsetSignature(targetMoves)
+    } catch {
+      return false
+    }
+  }
+
   return {
     gen,
     getLearnsetMoves,
     flattenMoves,
     getRandomMovesSubset,
     getRandomPokemonWithMoves,
+    getLearnsetSignature,
+    hasMatchingLearnset,
   }
 }

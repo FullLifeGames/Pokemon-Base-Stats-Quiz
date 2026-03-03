@@ -57,9 +57,10 @@ const {
   speciesSelection,
   generateRandomPokemon,
   getLocalizedName,
+  findSpecies,
 } = useQuizLogic(speciesOptions, locale)
 
-const { getRandomPokemonWithMoves } = useLearnsetData(generation)
+const { getRandomPokemonWithMoves, hasMatchingLearnset } = useLearnsetData(generation)
 
 const currentPokemon = ref<ReturnType<typeof generateRandomPokemon>>(null!)
 const value = ref('')
@@ -78,6 +79,7 @@ async function loadMoves() {
 
 const resetLearnsetState = async () => {
   value.value = ''
+  isCorrect.value = null
   correctGuesses.value = 0
   incorrectGuesses.value = 0
   hintLevel.value = 0
@@ -109,14 +111,11 @@ const selectedPokemon = computed(() =>
   speciesSelection.value.find((pokemon) => pokemon.value === value.value),
 )
 
-// For learnset quiz, correct = guessed the exact species
-const isCorrect = computed(() => {
-  if (!value.value) return null
-  return value.value === currentPokemon.value.name
-})
+const isCorrect = ref<boolean | null>(null)
 
 const advanceLearnsetQuestion = async () => {
   value.value = ''
+  isCorrect.value = null
   hintLevel.value = 0
   await loadMoves()
 }
@@ -129,8 +128,21 @@ const { resetQuiz, advanceQuestion } = useSoloQuizLifecycle({
   onAdvanceState: advanceLearnsetQuestion,
 })
 
-function handleLearnsetSelection(selectedValue: string) {
+async function handleLearnsetSelection(selectedValue: string) {
   value.value = selectedValue === value.value ? '' : selectedValue
+
+  if (!value.value) {
+    isCorrect.value = null
+    return
+  }
+
+  // Check if the guessed Pokémon has the same learnset as the target
+  const guessedSpecies = findSpecies(value.value)
+  if (guessedSpecies && currentMoves.value) {
+    isCorrect.value = await hasMatchingLearnset(guessedSpecies, currentMoves.value)
+  } else {
+    isCorrect.value = false
+  }
 
   if (isCorrect.value) {
     correctGuesses.value++

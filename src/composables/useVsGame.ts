@@ -145,7 +145,7 @@ export function useVsGame() {
 
   // Learnset data (for learnset quiz mode)
   const vsGeneration = computed<GenerationNum>(() => settings.value.generation as GenerationNum)
-  const { getRandomPokemonWithMoves } = useLearnsetData(vsGeneration)
+  const { getRandomPokemonWithMoves, hasMatchingLearnset } = useLearnsetData(vsGeneration)
 
   // Damage calc (for damage quiz mode)
   const { generateDamageScenario, isDamageGuessCorrect, waitUntilReady: waitDamageReady } = useDamageCalc(vsGeneration, speciesOptions)
@@ -761,7 +761,7 @@ export function useVsGame() {
   }
 
   // --- Player: Submit Guess ---
-  function submitGuess(pokemonId: string) {
+  async function submitGuess(pokemonId: string) {
     if (!currentRound.value || gameState.value !== 'playing') return
     if (myRole.value === 'spectator') return
 
@@ -775,8 +775,12 @@ export function useVsGame() {
     let correct = false
 
     if (quizMode === 'learnset') {
-      // Learnset mode: exact species match
-      correct = pokemonId === currentRound.value.pokemonId
+      // Learnset mode: accept species with the same learnset
+      if (currentRound.value.learnsetMoves) {
+        correct = await hasMatchingLearnset(pokemon, currentRound.value.learnsetMoves)
+      } else {
+        correct = pokemonId === currentRound.value.pokemonId
+      }
     } else {
       // Base stat mode: stat-signature match
       const targetPokemon = findSpecies(currentRound.value.pokemonId)
