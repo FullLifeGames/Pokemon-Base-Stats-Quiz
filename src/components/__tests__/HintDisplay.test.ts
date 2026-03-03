@@ -6,6 +6,7 @@ import HintDisplay from '@/components/HintDisplay.vue'
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     t: (key: string) => key,
+    locale: { value: 'en' },
   }),
 }))
 

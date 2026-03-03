@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Clock, LogOut, Swords } from 'lucide-vue-next'
+import { Clock, Globe, LogOut, Swords } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import ModeToggle from './ModeToggle.vue'
 import { useI18n } from 'vue-i18n'
 import { useQuizLogic, type SpeciesFilterOptions } from '@/composables/useQuizLogic'
+import { useLocalePreference } from '@/composables/useLocalePreference'
 import { MAX_DAMAGE_PERCENT } from '@/composables/useDamageCalc'
 import PlayerCard from './PlayerCard.vue'
 import StatDisplay from './StatDisplay.vue'
@@ -21,6 +29,7 @@ import type { QuizMode } from '@/types/settings'
 import type { Species, GenerationNum } from '@pkmn/dex'
 
 const { t, locale } = useI18n()
+const { changeLocale } = useLocalePreference(locale)
 
 const props = defineProps<{
   players: VsPlayer[]
@@ -268,6 +277,24 @@ function getGuessDisplayName(guess: string | null): string {
           >
             <Clock class="w-3.5 h-3.5 md:w-4 md:h-4" />
             {{ timerDisplay }}
+          </div>
+          <div class="flex items-center gap-1" data-testid="vs-controls">
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button variant="ghost" size="icon" class="cursor-pointer h-7 w-7 md:h-8 md:w-8">
+                  <Globe class="h-[1rem] w-[1rem] md:h-[1.2rem] md:w-[1.2rem]" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem @click="changeLocale('en')" :class="{ 'bg-accent': locale === 'en' }" class="cursor-pointer">
+                  {{ t('sidebar.english') }}
+                </DropdownMenuItem>
+                <DropdownMenuItem @click="changeLocale('de')" :class="{ 'bg-accent': locale === 'de' }" class="cursor-pointer">
+                  {{ t('sidebar.deutsch') }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <ModeToggle />
           </div>
           <Button v-if="!isSpectator" variant="ghost" size="icon" class="h-7 w-7 md:h-8 md:w-8 text-muted-foreground hover:text-destructive cursor-pointer" @click="emit('quit')" :title="t('vs.quit')">
             <LogOut class="w-3.5 h-3.5 md:w-4 md:h-4" />

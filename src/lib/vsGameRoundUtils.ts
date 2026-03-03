@@ -44,7 +44,7 @@ export function getClosestGuessScore(distance: number, bestDistance: number, mod
 
   const modeScale = mode === 'damage' ? 20 : mode === 'weight' ? 30 : 0.8
   const normalized = Math.min(distance / modeScale, 2)
-  const baseScore = Math.max(0, Math.round(900 - normalized * 550))
+  const baseScore = Math.max(0, Math.round(800 - normalized * 500))
   const closestBonus = distance === bestDistance ? 200 : 0
   return baseScore + closestBonus
 }

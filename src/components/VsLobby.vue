@@ -10,13 +10,23 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import GenerationSelect from './GenerationSelect.vue'
-import { Copy, Users, Eye, ArrowLeft, Loader2 } from 'lucide-vue-next'
+import ModeToggle from './ModeToggle.vue'
+import { Copy, Users, Eye, ArrowLeft, Loader2, Globe } from 'lucide-vue-next'
 import type { VsRoomSettings, VsPlayer, GameMode } from '@/types/vsMode'
+import { getDefaultTimeLimitForMode } from '@/types/vsMode'
 import type { QuizMode } from '@/types/settings'
 import type { GenerationNum } from '@pkmn/dex'
+import { useLocalePreference } from '@/composables/useLocalePreference'
 
-const { t } = useI18n()
+const { locale, t } = useI18n()
+const { changeLocale } = useLocalePreference(locale)
 
 const props = defineProps<{
   roomCode: string
@@ -70,7 +80,7 @@ const setGameMode = (mode: GameMode) => {
 }
 
 const setQuizMode = (mode: QuizMode) => {
-  emit('update-settings', { ...props.settings, quizMode: mode })
+  emit('update-settings', { ...props.settings, quizMode: mode, timeLimit: getDefaultTimeLimitForMode(mode) })
 }
 
 const quizModes: { value: QuizMode; labelKey: string }[] = [
@@ -87,11 +97,32 @@ const showHintsToggle = computed(() => props.settings.quizMode !== 'weight' && p
 <template>
   <div class="min-h-[100dvh] flex flex-col items-center justify-center p-4 md:p-8 2xl:p-12">
     <div class="w-full space-y-4 md:space-y-6 2xl:space-y-8" style="max-width: min(32rem, 88vw);">
-      <!-- Back button -->
-      <Button variant="ghost" class="cursor-pointer" @click="emit('leave')">
-        <ArrowLeft class="w-4 h-4 mr-2" />
-        {{ t('vs.backToMenu') }}
-      </Button>
+      <!-- Top bar: back button + controls -->
+      <div class="flex items-center justify-between">
+        <Button variant="ghost" class="cursor-pointer" @click="emit('leave')">
+          <ArrowLeft class="w-4 h-4 mr-2" />
+          {{ t('vs.backToMenu') }}
+        </Button>
+        <div class="flex items-center gap-2" data-testid="vs-controls">
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <Button variant="outline" size="icon" class="cursor-pointer h-9 w-9">
+                <Globe class="h-[1.2rem] w-[1.2rem]" />
+                <span class="sr-only">{{ t('sidebar.english') }}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem @click="changeLocale('en')" :class="{ 'bg-accent': locale === 'en' }" class="cursor-pointer">
+                {{ t('sidebar.english') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="changeLocale('de')" :class="{ 'bg-accent': locale === 'de' }" class="cursor-pointer">
+                {{ t('sidebar.deutsch') }}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <ModeToggle />
+        </div>
+      </div>
 
       <h1 class="text-2xl md:text-4xl 2xl:text-5xl font-bold text-center">{{ t('vs.lobby') }}</h1>
 
@@ -206,6 +237,19 @@ const showHintsToggle = computed(() => props.settings.quizMode !== 'weight' && p
                 max="300"
               />
               <p class="text-xs text-muted-foreground">{{ t('vs.timeLimitDesc') }}</p>
+            </div>
+
+            <!-- Player Limit -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium">{{ t('vs.maxPlayers') }}</label>
+              <Input
+                type="number"
+                :model-value="settings.maxPlayers"
+                @update:model-value="(val) => updateSetting('maxPlayers', Math.max(0, typeof val === 'number' ? val : parseInt(String(val)) || 0))"
+                min="0"
+                max="20"
+              />
+              <p class="text-xs text-muted-foreground">{{ t('vs.maxPlayersDesc') }}</p>
             </div>
 
             <!-- Collapsible filter & quiz settings -->
@@ -437,6 +481,7 @@ const showHintsToggle = computed(() => props.settings.quizMode !== 'weight' && p
               <div v-if="settings.gameMode === 'rounds'">{{ t('vs.totalRounds') }}: {{ settings.totalRounds }}</div>
               <div v-else>{{ t('vs.targetScore') }}: {{ settings.targetScore }}</div>
               <div>{{ t('vs.timeLimit') }}: {{ settings.timeLimit }}s</div>
+              <div>{{ t('vs.maxPlayers') }}: {{ settings.maxPlayers === 0 ? t('vs.unlimited') : settings.maxPlayers }}</div>
               <div>{{ t('sidebar.fullyEvolvedOnly') }}: {{ settings.fullyEvolvedOnly ? '✓' : '✗' }}</div>
               <div>{{ t('sidebar.includeMegaPokemon') }}: {{ settings.includeMegaPokemon ? '✓' : '✗' }}</div>
               <div>{{ t('sidebar.generation') }}: {{ settings.generation }}</div>

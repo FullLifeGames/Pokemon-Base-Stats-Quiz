@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/FullLifeGames/Pokemon-Base-Stats-Quiz/actions/workflows/ci.yml/badge.svg)](https://github.com/FullLifeGames/Pokemon-Base-Stats-Quiz/actions/workflows/ci.yml)
 
-A fully-featured interactive quiz application with **five quiz modes** to test your Pokémon knowledge: Base Stats, Learnset, Damage Calculation, Weight, and Height. Built with modern web technologies and comprehensive testing capabilities.
+A fully-featured interactive quiz application with **five quiz modes** to test your Pokémon knowledge: Base Stats, Learnset, Damage Calculation, Weight, and Height. Built with modern web technologies, full English/German localization, and comprehensive unit + end-to-end testing.
 
 ## 🎮 Features
 
@@ -25,6 +25,8 @@ Choose from five different quiz types:
 - **Base Forms Only**: Uses species without alternate forms (no Pikachu-Alola, Charizard-Mega, etc.)
 - **Smart Filtering**: Automatically retries if a Pokémon has no learnable moves
 - **Hint System**: Request hints showing types and abilities
+- **Localized Display**: Type headers and move names displayed in the user's locale
+- **Locale-Aware Sorting**: Types and moves sorted alphabetically by their localized names
 
 **3. Damage Calc Quiz**
 - **Damage Scenarios**: Shows attacker vs defender matchups with moves
@@ -35,6 +37,7 @@ Choose from five different quiz types:
 - **Curated Sets**: Filters out CAP Pokémon and non-standard metagames (Balanced Hackmons, Almost Any Ability)
 - **Dynamic Loading**: Lazy-loads generation-specific setdex data (code-split per generation)
 - **Detailed Display**: Shows abilities, items, natures, EVs, and Tera types for each scenario
+- **Localized Scenario Data**: Move names, abilities, items, natures, and Tera types displayed in the user's locale
 - **Field Effects**: Automatically detects and applies weather (Sun, Rain, Sand, Snow) and terrain (Grassy, Electric, Psychic, Misty) from Pokémon abilities, with defender's ability taking precedence
 
 **4. Weight Quiz**
@@ -69,6 +72,7 @@ Choose from five different quiz types:
 - **Session Persistence**: Automatically reconnect if disconnected
 - **Spectator Mode**: Watch matches in real-time without participating (unlimited)
 - **Forfeit Option**: Gracefully exit matches (game ends if less than 2 players remain)
+- **In-Game Controls**: Language and theme toggles accessible during gameplay
 
 ### Customization & Settings
 - **Quiz Mode Selection**: Choose between Base Stats, Learnset, Damage Calc, Weight, or Height
@@ -90,6 +94,9 @@ Choose from five different quiz types:
 - **English & German Support**: Full i18n implementation with vue-i18n
 - **Locale Persistence**: Remembers user's language preference
 - **Translated Pokémon Names**: 1350+ German Pokémon names from PokéAPI
+- **Translated Game Data**: German names for 21 types, 843 moves, 305 abilities, 25 natures, and 1539 items from PokéAPI
+- **Localized Hints & Scenarios**: Types, abilities, moves, items, natures, and Tera types shown in the active locale
+- **Locale-Aware Sorting**: Learnset types and moves sorted alphabetically by localized name
 
 ### User Interface
 - **Dark/Light Mode**: Dark mode by default with persisted user preference and animated transitions
@@ -102,11 +109,13 @@ Choose from five different quiz types:
 - **Mobile-Optimized**: Bottom sheet on mobile, popover on desktop with dynamic width matching
 
 ### Testing & Quality
-- **300+ Unit Tests**: Comprehensive test coverage with Vitest
+- **350+ Unit Tests**: Comprehensive test coverage with Vitest
+- **36 End-to-End Tests**: Full browser testing with Playwright (Chromium)
 - **Type Safety**: Full TypeScript support throughout
 - **CI-Ready**: Tests can be integrated into GitHub Actions
 - **Component Testing**: Dedicated tests for all UI components including shared components
 - **Auto-Import Support**: Vitest configured for Vue Composition API auto-imports
+- **E2E Coverage**: Solo quizzes (all 5 modes), multiplayer lobby, all VS quiz modes, spectator, rematch, forfeit, and in-game controls
 
 ## 🛠️ Tech Stack
 
@@ -120,12 +129,13 @@ Choose from five different quiz types:
 - **@pkmn/data** (v0.10.6) - Learnset data for move information
 - **@smogon/calc** (0.10.0) - Damage calculation engine
 - **@pkmn/img** (v0.10.6) - Pokémon sprites and icons
-- **PokéAPI v2** - German Pokémon localization
+- **PokéAPI v2** - German Pokémon name, type, move, ability, nature, and item localization
 - **vue-i18n** (v11.2.8) - Internationalization
 - **Smogon Setdex** - Competitive Pokémon sets for Gen 1-9 (4798 Pokémon total)
 
 ### Multiplayer & Networking
-- **PeerJS** (v1.5.4) - WebRTC peer-to-peer connections
+- **PeerJS** (v1.5.5) - WebRTC peer-to-peer connections
+- **Self-Hosted PeerJS Server** - Dedicated signaling server at fulllifegames.com (reverse proxy on port 443)
 - **Real-time Communication** - Direct browser-to-browser gameplay
 - **Session Management** - Automatic reconnection and state recovery
 
@@ -139,13 +149,14 @@ Choose from five different quiz types:
 - **Vitest** (v4.0.18) - Unit testing framework
 - **@vue/test-utils** (v2.4.6) - Vue component testing
 - **happy-dom** - Lightweight DOM environment
+- **Playwright** - End-to-end browser testing (Chromium)
 
 ## 📋 Project Structure
 
 ```
 src/
 ├── components/
-│   ├── __tests__/              # Unit tests (300+ tests)
+│   ├── __tests__/              # Unit tests (350+ tests)
 │   ├── BaseStatQuiz.vue        # Base stats quiz mode
 │   ├── LearnsetQuiz.vue        # Learnset quiz mode
 │   ├── DamageQuiz.vue          # Damage calc quiz mode
@@ -154,10 +165,13 @@ src/
 │   ├── VsGame.vue              # Multiplayer game screen
 │   ├── VsResults.vue           # Match results screen
 │   ├── StatDisplay.vue         # Base stats visualization
-│   ├── LearnsetDisplay.vue     # Learnset moves display
-│   ├── DamageScenarioDisplay.vue # Damage scenario display
+│   ├── LearnsetDisplay.vue     # Learnset moves display (localized types & moves, locale-aware sorting)
+│   ├── DamageScenarioDisplay.vue # Damage scenario display (localized moves, abilities, items, natures)
 │   ├── PokemonSelector.vue     # Shared Pokemon picker with infinite scroll
-│   ├── HintDisplay.vue         # Shared hint display
+│   ├── HintDisplay.vue         # Shared hint display (localized types & abilities)
+│   ├── DismissibleInfoBanner.vue # Dismissible info banners
+│   ├── ValueOptionGrid.vue     # Shared value option grid (Weight/Height)
+│   ├── PokemonValueQuiz.vue    # Value-based quiz (Weight/Height)
 │   ├── AppSidebar.vue          # Settings sidebar
 │   ├── GenerationSelect.vue    # Reusable generation dropdown
 │   ├── PlayerCard.vue          # VS Mode player info card
@@ -178,7 +192,11 @@ src/
 │   └── vsMode.ts               # VS Mode type definitions
 ├── lib/
 │   ├── utils.ts                # Utility functions
-│   ├── pokemonNameHelper.ts    # Pokémon name localization
+│   ├── pokemonNameHelper.ts    # Pokémon name, type, move, ability, nature & item localization
+│   ├── pokemonNames.json       # 1350+ German Pokémon names
+│   ├── pokemonTranslations.json # German types, moves, abilities, natures & items
+│   ├── valueQuizOptions.ts     # Weight/Height option generation
+│   ├── vsGameRoundUtils.ts     # VS Mode round utilities
 │   └── setdex-gen*.json        # Competitive sets for Gen 1-9 (9 files)
 ├── i18n/
 │   └── locales/
@@ -188,11 +206,13 @@ src/
 └── main.ts                      # Entry point
 
 scripts/
-├── generatePokemonNames.js     # PokéAPI name generation script
+├── generatePokemonNames.js     # PokéAPI Pokémon name generation script
+├── generatePokemonTranslations.js # PokéAPI type/move/ability/nature/item translation script
 └── generateSetdex.js           # Smogon setdex generation script
 
-public/
-└── pokemonNames.json           # 1350+ German Pokémon names
+e2e/
+├── solo-quizzes.spec.ts        # Solo mode E2E tests (all 5 quiz modes + navigation)
+└── multiplayer.spec.ts         # Multiplayer E2E tests (lobby, all modes, spectator, rematch, forfeit, controls)
 ```
 
 ## 🚀 Getting Started
@@ -213,6 +233,9 @@ pnpm install
 
 # Generate German Pokémon names (optional, already in repo)
 pnpm run generate:names
+
+# Generate German type/move/ability/nature/item translations (optional, already in repo)
+node scripts/generatePokemonTranslations.js
 
 # Generate competitive setdex data (optional, already in repo)
 pnpm run generate:setdex
@@ -237,13 +260,13 @@ pnpm run preview
 
 ## 🧪 Testing
 
-Run the test suite with comprehensive unit tests:
+Run the test suite with comprehensive unit and end-to-end tests:
 
 ```bash
-# Run tests once
+# Run unit tests once
 pnpm test --run
 
-# Run tests in watch mode
+# Run unit tests in watch mode
 pnpm test
 
 # Open interactive test UI
@@ -251,9 +274,16 @@ pnpm test:ui
 
 # Generate coverage report
 pnpm test:coverage
+
+# Run E2E tests (requires `pnpm run build` first)
+pnpm run test:e2e
+
+# Run E2E tests with interactive UI
+pnpm run test:e2e:ui
 ```
 
-**Test Coverage**: 300+ unit tests covering all components, composables, and logic
+### Unit Tests
+**Test Coverage**: 350+ unit tests covering all components, composables, and logic
 - BaseStatQuiz: 7 tests
 - VsMode: 13 tests (updated for N-player)
 - VsGame: 20 tests (updated for N-player)
@@ -273,6 +303,24 @@ pnpm test:coverage
 - App: 4 tests
 - AppSidebar: 2 tests
 - And more...
+
+### End-to-End Tests
+**E2E Coverage**: 36 Playwright tests across solo and multiplayer modes
+- **Solo – Base Stat Quiz**: 4 tests (load, guess, reset, hints)
+- **Solo – Learnset Quiz**: 3 tests (load, guess, score)
+- **Solo – Damage Quiz (Singles)**: 3 tests (load, guess, score)
+- **Solo – Damage Quiz (VGC)**: 2 tests (load, guess)
+- **Solo – Weight Quiz**: 3 tests (load, guess, score)
+- **Solo – Height Quiz**: 3 tests (load, guess, score)
+- **Navigation**: 4 tests (home, solo, vs, language toggle)
+- **Multiplayer – Lobby**: 4 tests (create, join, settings, leave)
+- **Multiplayer – Weight/Height/Base Stat/Learnset/Damage Quiz**: 5 tests (1 per mode)
+- **Multiplayer – Spectator**: 1 test
+- **Multiplayer – Rematch**: 1 test
+- **Multiplayer – VS Controls**: 2 tests (language, theme)
+- **Multiplayer – Host Forfeit**: 1 test
+
+Multiplayer tests run in serial mode to avoid PeerJS connection flakiness.
 
 For detailed testing information, see [TESTING.md](./TESTING.md)
 
@@ -378,9 +426,14 @@ The app supports English and German with full translations for:
 - UI labels and buttons
 - Stat descriptions and explanations
 - Pokémon names (1350+ entries)
+- Type names (21 types)
+- Move names (843 moves)
+- Ability names (305 abilities)
+- Nature names (25 natures)
+- Item names (1539 items)
 - Messages and dialogs
 
-Switch languages via the language selector in the sidebar.
+Switch languages via the language selector in the sidebar, VS lobby, or VS game header. All Pokémon data (types, moves, abilities, items, natures) is displayed in the active locale with locale-aware alphabetical sorting.
 
 ## 🎨 Customization
 
@@ -460,6 +513,11 @@ The Base Stats quiz doesn't require exact Pokémon names. If a Pokémon has iden
 ### German Localization
 German Pokémon names are fetched from PokéAPI and cached in `pokemonNames.json`. The localization handles special forms like "Deoxys-Attack" properly.
 
+Additionally, German translations for types, moves, abilities, natures, and items are fetched from PokéAPI via `scripts/generatePokemonTranslations.js` and stored in `pokemonTranslations.json`. These translations are used in:
+- **HintDisplay**: Type and ability hints shown in the user's locale
+- **DamageScenarioDisplay**: Move names, abilities, items, natures, and Tera types
+- **LearnsetDisplay**: Type headers and move names, both sorted by localized name
+
 ### Auto-Advance Mechanism
 After selection, the quiz displays results for 500ms then automatically loads the next Pokémon. Timer pauses during this transition.
 
@@ -475,7 +533,7 @@ Customize the difficulty by setting how many correct answers are needed to compl
 - Learnset quiz uses base forms only (no alternate forms)
 - Some older generation Pokémon may have limited competitive sets available
 - VS Mode requires all players to have stable internet connections
-- VS Mode uses a free PeerJS server which may have occasional downtime
+- VS Mode uses a self-hosted PeerJS server which may have occasional downtime
 - Room codes expire when all players disconnect
 - VS Mode time limit is mandatory (minimum 10 seconds) to ensure fair scoring
 - Host disconnection ends the match (all state managed by host)
@@ -489,7 +547,7 @@ See `package.json` for complete dependency list. Key packages:
 - `@pkmn/dex` (0.10.6) - Pokémon data
 - `@pkmn/data` (0.10.6) - Learnset data
 - `@smogon/calc` (0.10.0) - Damage calculation
-- `peerjs` (1.5.4) - WebRTC multiplayer
+- `peerjs` (1.5.5) - WebRTC multiplayer
 - `vite` (7.2.5 via rolldown) - Build tool
 - `vitest` (4.0.18) - Testing
 
@@ -514,7 +572,7 @@ This project was developed as an **experiment with AI-assisted coding** using Gi
 - Real-time multiplayer with WebRTC/PeerJS
 - Peer-to-peer networking without backend servers
 - Component reusability and DRY principles
-- Comprehensive unit testing (300+ tests)
+- Comprehensive testing (350+ unit tests, 36 E2E tests with Playwright)
 - Performance optimization (infinite scrolling, lazy loading)
 - Advanced randomization algorithms with history tracking
 - Responsive design with mobile-first approach
@@ -531,3 +589,6 @@ The codebase serves as a reference for combining AI assistance with best practic
 - **Code Quality**: Refactored components to maximize reusability with useQuizLogic composable
 - **Settings Reactivity**: All quiz modes respond instantly to configuration changes
 - **Form Filtering**: Learnset quiz uses base forms only (prevents confusion with alternate forms)
+- **Full German Localization**: Types, moves, abilities, natures, items all translated via PokéAPI
+- **End-to-End Testing**: 36 Playwright tests covering all solo modes, multiplayer flows, spectator, rematch, forfeit, and in-game controls
+- **Self-Hosted PeerJS**: Dedicated signaling server for reliable multiplayer connections

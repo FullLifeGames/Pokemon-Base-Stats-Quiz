@@ -1,4 +1,4 @@
-import type { QuizSettings } from './settings'
+import type { QuizMode, QuizSettings } from './settings'
 import type { MoveInfo } from '@/composables/useLearnsetData'
 import type { DamageScenario } from '@/composables/useDamageCalc'
 
@@ -81,6 +81,7 @@ export interface VsRoomSettings extends QuizSettings {
   gameMode: GameMode
   totalRounds: number     // used when gameMode === 'rounds'
   targetScore: number     // used when gameMode === 'target-score'
+  maxPlayers: number      // 0 = unlimited
 }
 
 /**
@@ -134,6 +135,17 @@ export interface VsSession {
 }
 
 /**
+ * Default time limit per quiz mode (seconds).
+ * Learnset gets extra time because players need to evaluate move lists.
+ */
+export function getDefaultTimeLimitForMode(mode: QuizMode): number {
+  switch (mode) {
+    case 'learnset': return 45
+    default: return 30
+  }
+}
+
+/**
  * Default VS room settings
  */
 export const defaultVsRoomSettings: VsRoomSettings = {
@@ -150,6 +162,7 @@ export const defaultVsRoomSettings: VsRoomSettings = {
   gameMode: 'rounds',
   totalRounds: 10,
   targetScore: 5000,
+  maxPlayers: 0,
 }
 
 /**
@@ -201,7 +214,7 @@ const namePokemon = [
 export function generatePlayerName(): string {
   const adj = nameAdjectives[Math.floor(Math.random() * nameAdjectives.length)]!
   const poke = namePokemon[Math.floor(Math.random() * namePokemon.length)]!
-  return `${adj}${poke}`
+  return `${adj} ${poke}`
 }
 
 /**

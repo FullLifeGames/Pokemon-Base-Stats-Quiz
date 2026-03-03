@@ -35,6 +35,10 @@ export function usePeerConnection(onMessage: (msg: VsMessage, conn: DataConnecti
 
       const p = new Peer(fullId, {
         debug: 0,
+        host: 'fulllifegames.com',
+        port: 443,
+        path: '/quiz-app',
+        secure: true,
       })
 
       p.on('open', (id) => {

@@ -3,13 +3,40 @@ import { useI18n } from 'vue-i18n'
 import type { DamageScenario } from '@/composables/useDamageCalc'
 import type { GenerationNum } from '@pkmn/dex'
 import SpritesRenderer from '@/components/renderer/SpritesRenderer.vue'
-import { getLocalizedPokemonName } from '@/lib/pokemonNameHelper'
+import {
+  getLocalizedPokemonName,
+  getLocalizedMoveName,
+  getLocalizedAbilityName,
+  getLocalizedNatureName,
+  getLocalizedItemName,
+  getLocalizedTypeName,
+} from '@/lib/pokemonNameHelper'
 
 const { t, locale } = useI18n()
 
-function localizedName(name?: string): string {
+function loc(name?: string): string {
   if (!name) return ''
-  return getLocalizedPokemonName(name, String(locale?.value || ''))
+  return getLocalizedPokemonName(name, locale.value)
+}
+function locMove(name?: string): string {
+  if (!name) return ''
+  return getLocalizedMoveName(name, locale.value)
+}
+function locAbility(name?: string): string {
+  if (!name) return ''
+  return getLocalizedAbilityName(name, locale.value)
+}
+function locNature(name?: string): string {
+  if (!name) return ''
+  return getLocalizedNatureName(name, locale.value)
+}
+function locItem(name?: string): string {
+  if (!name) return ''
+  return getLocalizedItemName(name, locale.value)
+}
+function locType(name?: string): string {
+  if (!name) return ''
+  return getLocalizedTypeName(name, locale.value)
 }
 
 const props = defineProps<{
@@ -88,18 +115,18 @@ function getTerrainIcon(terrain: string): string {
             <SpritesRenderer v-if="generation" class="max-w-full max-h-full" :generation="generation" :name="scenario.attackerName" />
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ localizedName(scenario.attackerName) }}</h3>
+            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ loc(scenario.attackerName) }}</h3>
             <p class="text-[10px] md:text-xs text-muted-foreground italic">{{ scenario.attackerSetName }}</p>
             <p v-if="level" class="text-[10px] md:text-xs font-semibold text-red-600 dark:text-red-400">{{ t('damage.level', { level }) }}</p>
           </div>
         </div>
         <div class="text-[10px] md:text-xs space-y-0.5 text-muted-foreground">
-          <div v-if="scenario.attackerSet.ability"><strong>{{ t('damage.ability') }}:</strong> {{ scenario.attackerSet.ability }}</div>
-          <div v-if="scenario.attackerSet.item"><strong>{{ t('damage.item') }}:</strong> {{ scenario.attackerSet.item }}</div>
-          <div v-if="scenario.attackerSet.nature"><strong>{{ t('damage.nature') }}:</strong> {{ scenario.attackerSet.nature }}</div>
+          <div v-if="scenario.attackerSet.ability"><strong>{{ t('damage.ability') }}:</strong> {{ locAbility(scenario.attackerSet.ability) }}</div>
+          <div v-if="scenario.attackerSet.item"><strong>{{ t('damage.item') }}:</strong> {{ locItem(scenario.attackerSet.item) }}</div>
+          <div v-if="scenario.attackerSet.nature"><strong>{{ t('damage.nature') }}:</strong> {{ locNature(scenario.attackerSet.nature) }}</div>
           <div v-if="scenario.attackerSet.evs"><strong>{{ t('damage.evs') }}:</strong> {{ formatEvs(scenario.attackerSet.evs) }}</div>
           <div v-if="scenario.attackerTeraType" class="font-semibold text-purple-600 dark:text-purple-400">
-            💎 <strong>{{ t('damage.teraType') }}:</strong> {{ scenario.attackerTeraType }}
+            💎 <strong>{{ t('damage.teraType') }}:</strong> {{ locType(scenario.attackerTeraType) }}
           </div>
         </div>
       </div>
@@ -108,7 +135,7 @@ function getTerrainIcon(terrain: string): string {
       <div class="flex flex-row md:flex-col items-center justify-center self-center gap-1 md:gap-1 px-1">
         <span class="text-lg md:text-2xl">⚔️</span>
         <div class="bg-primary text-primary-foreground text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full text-center whitespace-normal md:whitespace-nowrap max-w-full md:max-w-none break-words">
-          {{ scenario.moveName }}
+          {{ locMove(scenario.moveName) }}
         </div>
         <span v-if="scenario.hits" class="text-[10px] md:text-xs font-semibold text-orange-600 dark:text-orange-400">
           {{ t('damage.hits', { count: scenario.hits }) }}
@@ -128,18 +155,18 @@ function getTerrainIcon(terrain: string): string {
             <SpritesRenderer v-if="generation" class="max-w-full max-h-full" :generation="generation" :name="scenario.defenderName" />
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ localizedName(scenario.defenderName) }}</h3>
+            <h3 class="font-bold text-sm md:text-base lg:text-lg">{{ loc(scenario.defenderName) }}</h3>
             <p class="text-[10px] md:text-xs text-muted-foreground italic">{{ scenario.defenderSetName }}</p>
             <p v-if="level" class="text-[10px] md:text-xs font-semibold text-blue-600 dark:text-blue-400">{{ t('damage.level', { level }) }}</p>
           </div>
         </div>
         <div class="text-[10px] md:text-xs space-y-0.5 text-muted-foreground">
-          <div v-if="scenario.defenderSet.ability"><strong>{{ t('damage.ability') }}:</strong> {{ scenario.defenderSet.ability }}</div>
-          <div v-if="scenario.defenderSet.item"><strong>{{ t('damage.item') }}:</strong> {{ scenario.defenderSet.item }}</div>
-          <div v-if="scenario.defenderSet.nature"><strong>{{ t('damage.nature') }}:</strong> {{ scenario.defenderSet.nature }}</div>
+          <div v-if="scenario.defenderSet.ability"><strong>{{ t('damage.ability') }}:</strong> {{ locAbility(scenario.defenderSet.ability) }}</div>
+          <div v-if="scenario.defenderSet.item"><strong>{{ t('damage.item') }}:</strong> {{ locItem(scenario.defenderSet.item) }}</div>
+          <div v-if="scenario.defenderSet.nature"><strong>{{ t('damage.nature') }}:</strong> {{ locNature(scenario.defenderSet.nature) }}</div>
           <div v-if="scenario.defenderSet.evs"><strong>{{ t('damage.evs') }}:</strong> {{ formatEvs(scenario.defenderSet.evs) }}</div>
           <div v-if="scenario.defenderTeraType" class="font-semibold text-purple-600 dark:text-purple-400">
-            💎 <strong>{{ t('damage.teraType') }}:</strong> {{ scenario.defenderTeraType }}
+            💎 <strong>{{ t('damage.teraType') }}:</strong> {{ locType(scenario.defenderTeraType) }}
           </div>
         </div>
       </div>

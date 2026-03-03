@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { MovesByType, MoveInfo } from '@/composables/useLearnsetData'
+import { getLocalizedTypeName, getLocalizedMoveName } from '@/lib/pokemonNameHelper'
+
+const { t, locale } = useI18n()
 
 const props = defineProps<{
   moves: MovesByType | null
@@ -36,10 +40,18 @@ const sortedTypes = computed(() => {
   return Object.entries(props.moves)
     .map(([type, moves]) => ({
       type,
-      moves,
+      moves: [...moves].sort((a, b) =>
+        getLocalizedMoveName(a.name, locale.value).localeCompare(
+          getLocalizedMoveName(b.name, locale.value), locale.value,
+        ),
+      ),
       colors: typeColors[type] ?? defaultColors,
     }))
-    .sort((a, b) => a.type.localeCompare(b.type))
+    .sort((a, b) =>
+      getLocalizedTypeName(a.type, locale.value).localeCompare(
+        getLocalizedTypeName(b.type, locale.value), locale.value,
+      ),
+    )
 })
 
 const totalMoveCount = computed(() => {
@@ -59,7 +71,7 @@ function categoryIcon(category: MoveInfo['category']): string {
 <template>
   <div v-if="moves" class="flex flex-col gap-2 md:gap-3">
     <p class="text-sm md:text-sm text-muted-foreground">
-      {{ totalMoveCount }} moves
+      {{ t('learnset.moveCount', { count: totalMoveCount }) }}
     </p>
     <div class="max-h-[50vh] overflow-y-auto pr-1 space-y-2 md:space-y-3">
       <div
@@ -74,7 +86,7 @@ function categoryIcon(category: MoveInfo['category']): string {
             class="text-xs md:text-xs font-bold uppercase px-2 py-0.5 rounded-full"
             :class="[colors.bg, colors.text]"
           >
-            {{ type }}
+            {{ getLocalizedTypeName(type, locale) }}
           </span>
           <span class="text-xs md:text-xs text-muted-foreground">
             ({{ typeMoves.length }})
@@ -88,10 +100,10 @@ function categoryIcon(category: MoveInfo['category']): string {
             :key="move.name"
             class="inline-flex items-center gap-1 text-xs md:text-xs px-2 md:px-2 py-1 md:py-1 rounded-md"
             :class="[colors.bg, colors.text]"
-            :title="`${move.name} — ${move.category}${move.basePower ? ` (${move.basePower} BP)` : ''}`"
+            :title="`${getLocalizedMoveName(move.name, locale)} — ${move.category}${move.basePower ? ` (${move.basePower} BP)` : ''}`"
           >
             <span class="text-[10px] md:text-[10px]">{{ categoryIcon(move.category) }}</span>
-            {{ move.name }}
+            {{ getLocalizedMoveName(move.name, locale) }}
             <span v-if="move.basePower" class="opacity-60 text-[10px] md:text-[10px]">{{ move.basePower }}</span>
           </span>
         </div>

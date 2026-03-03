@@ -152,16 +152,22 @@
     "timeLimit": "Zeitlimit (Sekunden)",
     "timeLimitDesc": "Auf 0 setzen für kein Zeitlimit. Hinweise erscheinen automatisch bei wenig Zeit.",
     "noTimeLimit": "Kein Limit",
+    "maxPlayers": "Spielerlimit",
+    "maxPlayersDesc": "Auf 0 setzen für unbegrenzte Spieler.",
+    "unlimited": "Unbegrenzt",
     "errors": {
       "room-taken": "Dieser Raum-Code ist bereits vergeben. Versuche es erneut.",
       "room-not-found": "Raum nicht gefunden. Überprüfe den Code.",
       "connection-error": "Verbindungsfehler. Bitte versuche es erneut.",
-      "peer-unavailable": "Verbindung zum Raum nicht möglich."
+      "peer-unavailable": "Verbindung zum Raum nicht möglich.",
+      "room-full": "Dieser Raum ist voll.",
+      "game-in-progress": "In diesem Raum läuft bereits ein Spiel."
     }
   },
   "learnset": {
     "title": "Attacken-Quiz",
-    "explanation": "Dies sind die Attacken, die ein Pokémon lernen kann — erkennst du, welches es ist?"
+    "explanation": "Dies sind die Attacken, die ein Pokémon lernen kann — erkennst du, welches es ist?",
+    "moveCount": "{count} Attacken"
   },
   "damage": {
     "title": "Schadens-Quiz",

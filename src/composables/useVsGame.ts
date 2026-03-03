@@ -327,6 +327,20 @@ export function useVsGame() {
             sendTo(conn, { type: 'room-settings', settings: settings.value })
             sendTo(conn, { type: 'spectator-state', room: getFullRoomState() })
           } else {
+            // Reject players trying to join an active game
+            const isGameActive = !['idle', 'waiting-for-players', 'lobby'].includes(gameState.value)
+            if (isGameActive) {
+              sendTo(conn, { type: 'error', message: 'game-in-progress' })
+              break
+            }
+
+            // Reject if room is full
+            const connectedPlayers = players.value.filter(p => p.connected)
+            if (settings.value.maxPlayers > 0 && connectedPlayers.length >= settings.value.maxPlayers) {
+              sendTo(conn, { type: 'error', message: 'room-full' })
+              break
+            }
+
             // Player joined
             const newPlayer = createPlayer(msg.id, msg.name, 'player')
             players.value.push(newPlayer)
@@ -515,6 +529,10 @@ export function useVsGame() {
 
       case 'error':
         connectionError.value = msg.message
+        if (msg.message === 'game-in-progress' || msg.message === 'room-full') {
+          gameState.value = 'idle'
+          saveSession(null)
+        }
         break
 
       case 'reconnect':
@@ -564,6 +582,21 @@ export function useVsGame() {
             } else if (allPlayersAnswered.value && gameState.value === 'playing') {
               resolveRound()
             }
+          }
+        } else {
+          // Guest received forfeit from host — end match, declare self as winner
+          const forfeitingPlayer = players.value.find(p => p.id === msg.playerId)
+          if (forfeitingPlayer) {
+            forfeitingPlayer.connected = false
+          }
+          if (!['idle', 'waiting-for-players', 'lobby'].includes(gameState.value)) {
+            const remainingPlayers = players.value.filter(p => p.connected && p.id !== msg.playerId)
+            const winner = remainingPlayers[0]
+            if (winner) {
+              matchWinner.value = winner.id
+            }
+            gameState.value = 'match-end'
+            stopRoundTimer()
           }
         }
         break
@@ -1059,11 +1092,14 @@ export function useVsGame() {
     saveGameState(null)
     destroy()
     gameState.value = 'idle'
+    roomCode.value = ''
+    settings.value = { ...defaultVsRoomSettings }
     players.value = []
     spectators.value = []
     currentRound.value = null
     roundNumber.value = 0
     matchWinner.value = null
+    connectionError.value = null
     playerConnections.clear()
   }
 

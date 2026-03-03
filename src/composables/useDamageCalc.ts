@@ -210,8 +210,8 @@ export function useDamageCalc(
       // Always exclude CAP (Create-A-Pokémon) — they have num <= 0
       if (species.num <= 0) return false
 
-      // Always exclude Gmax forms
-      if (species.forme === 'Gmax' || species.forme === 'Alola-Totem') return false
+      // Always exclude Gmax forms and Totem forms (they often have identical stats to their base species, which breaks the quiz logic)
+      if (species.forme === 'Gmax' || species.forme?.includes('Totem')) return false
 
       if (filterOptions) {
         const opts = filterOptions.value

@@ -100,6 +100,7 @@ describe('VsGame.vue', () => {
     gameMode: 'rounds',
     totalRounds: 10,
     targetScore: 5000,
+    maxPlayers: 0,
     maxScore: 10,
     hintsEnabled: false,
     generation: 9,

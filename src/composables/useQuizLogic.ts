@@ -65,7 +65,7 @@ export function useQuizLogic(
         (s) =>
           s.num > 0 &&
           s.forme !== 'Gmax' &&
-          s.forme !== 'Alola-Totem',
+          !s.forme?.includes('Totem'),
       )
 
     list = list.filter(

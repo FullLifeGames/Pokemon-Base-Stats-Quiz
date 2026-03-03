@@ -1,14 +1,23 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { LightbulbIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { getLocalizedTypeName, getLocalizedAbilityName } from '@/lib/pokemonNameHelper'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
-defineProps<{
+const props = defineProps<{
   hintLevel: number
   types: string[]
   abilities: string[]
 }>()
+
+const localizedTypes = computed(() =>
+  props.types.map((t) => getLocalizedTypeName(t, locale.value)),
+)
+const localizedAbilities = computed(() =>
+  props.abilities.map((a) => getLocalizedAbilityName(a, locale.value)),
+)
 </script>
 
 <template>
@@ -18,14 +27,14 @@ defineProps<{
         <LightbulbIcon class="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
         <div>
           <strong>{{ t('hints.firstHint') }}:</strong>
-          <span class="ml-1 md:ml-2">{{ types.join(', ') }}</span>
+          <span class="ml-1 md:ml-2">{{ localizedTypes.join(', ') }}</span>
         </div>
       </div>
       <div v-if="hintLevel >= 2" class="flex items-center gap-1.5 md:gap-2">
         <LightbulbIcon class="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
         <div>
           <strong>{{ t('hints.secondHint') }}:</strong>
-          <span class="ml-1 md:ml-2">{{ abilities.join(', ') }}</span>
+          <span class="ml-1 md:ml-2">{{ localizedAbilities.join(', ') }}</span>
         </div>
       </div>
     </div>

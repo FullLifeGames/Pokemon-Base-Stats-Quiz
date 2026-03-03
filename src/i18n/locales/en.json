@@ -152,16 +152,22 @@
     "timeLimit": "Time Limit (seconds)",
     "timeLimitDesc": "Set to 0 for no time limit. Hints auto-show as time runs low.",
     "noTimeLimit": "No limit",
+    "maxPlayers": "Player Limit",
+    "maxPlayersDesc": "Set to 0 for unlimited players.",
+    "unlimited": "Unlimited",
     "errors": {
       "room-taken": "This room code is already in use. Try again.",
       "room-not-found": "Room not found. Check the code and try again.",
       "connection-error": "Connection error. Please try again.",
-      "peer-unavailable": "Could not connect to the room."
+      "peer-unavailable": "Could not connect to the room.",
+      "room-full": "This room is full.",
+      "game-in-progress": "A game is already in progress in this room."
     }
   },
   "learnset": {
     "title": "Learnset Quiz",
-    "explanation": "These are the moves a Pokémon can learn — can you identify which one?"
+    "explanation": "These are the moves a Pokémon can learn — can you identify which one?",
+    "moveCount": "{count} moves"
   },
   "damage": {
     "title": "Damage Quiz",
