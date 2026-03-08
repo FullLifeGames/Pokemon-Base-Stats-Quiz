@@ -90,7 +90,9 @@ export function generateValueQuizOptions(target: number, mode: ValueQuizMode): n
     const [minStep, maxStep] = band
     const direction = Math.random() < 0.5 ? -1 : 1
     const magnitude = minStep + Math.random() * (maxStep - minStep)
-    const candidate = normalizeValueOption(normalizedTarget + direction * magnitude)
+    const rawCandidate = normalizedTarget + direction * magnitude
+    if (rawCandidate < 0.1) continue
+    const candidate = normalizeValueOption(rawCandidate)
 
     if (candidate !== normalizedTarget) {
       distractors.add(candidate)
@@ -100,8 +102,9 @@ export function generateValueQuizOptions(target: number, mode: ValueQuizMode): n
   let fallbackStep = farMinStep
   while (distractors.size < 3) {
     const direction = Math.random() < 0.5 ? -1 : 1
-    const fallbackValue = normalizeValueOption(normalizedTarget + direction * fallbackStep)
-    if (fallbackValue !== normalizedTarget) {
+    const rawFallback = normalizedTarget + direction * fallbackStep
+    const fallbackValue = normalizeValueOption(Math.max(0.1, rawFallback))
+    if (fallbackValue !== normalizedTarget && rawFallback >= 0.1) {
       distractors.add(fallbackValue)
     }
     fallbackStep += mode === 'weight' ? 10 : 0.4
