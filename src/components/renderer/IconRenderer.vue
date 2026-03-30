@@ -9,7 +9,9 @@ const properties = defineProps<{
 }>();
 const icon = computed(() => {
   if (properties.name) {
-    return Icons.getPokemon(properties.name);
+    return Icons.getPokemon(properties.name, {
+      domain: "fulllifegames.com/Tools/QuizHub/",
+    });
   }
   return null;
 });
